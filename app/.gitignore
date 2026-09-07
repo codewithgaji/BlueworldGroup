@@ -1,0 +1,96 @@
+# =========================
+# 🔐 ENV / SECRETS
+# =========================
+.env
+.env.*
+*.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# =========================
+# 🐍 PYTHON (FASTAPI)
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.env/
+env/
+ENV/
+.venv/
+
+# Python build / dist
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs
+*.log
+
+# SQLite DB (if used)
+*.sqlite3
+*.db
+
+# =========================
+# ⚛️ NODE / REACT
+# =========================
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Package managers
+.pnpm-store/
+.npm/
+.yarn/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# =========================
+# 🧠 TYPESCRIPT
+# =========================
+*.tsbuildinfo
+
+# =========================
+# 🧪 TEST / COVERAGE
+# =========================
+.coverage
+htmlcov/
+coverage/
+*.cover
+
+# =========================
+# 🛠️ IDE / EDITOR
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# 🖥️ OS FILES
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# 🚀 MISC
+# =========================
+*.bak
+*.tmp
+*.pid

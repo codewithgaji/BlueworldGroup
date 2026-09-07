@@ -1,0 +1,210 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Blue World Cosmetics design system.
+ * Blue = structure (nav, headers, footers). Orange = CTAs, highlights, accents.
+ * All colors are oklch semantic tokens. Never hardcode colors in components.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --shadow-card: 0 1px 2px oklch(0.28 0.09 258 / 0.06), 0 12px 32px -16px oklch(0.28 0.09 258 / 0.18);
+  --shadow-lift: 0 24px 60px -28px oklch(0.28 0.09 258 / 0.35);
+}
+
+:root {
+  --radius: 0.875rem;
+
+  --background: oklch(0.995 0.002 250);
+  --foreground: oklch(0.22 0.045 258);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.045 258);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.045 258);
+
+  /* Blue World blue */
+  --primary: oklch(0.45 0.155 256);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --primary-deep: oklch(0.29 0.115 258);
+  --primary-soft: oklch(0.94 0.028 250);
+
+  --secondary: oklch(0.955 0.012 250);
+  --secondary-foreground: oklch(0.29 0.09 258);
+
+  --muted: oklch(0.965 0.008 250);
+  --muted-foreground: oklch(0.53 0.03 256);
+
+  /* Blue World orange */
+  --accent: oklch(0.7 0.185 47);
+  --accent-foreground: oklch(0.21 0.05 258);
+  --accent-soft: oklch(0.96 0.045 68);
+
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.99 0.005 250);
+  --success: oklch(0.62 0.14 155);
+  --success-foreground: oklch(0.99 0.005 250);
+
+  --border: oklch(0.915 0.012 252);
+  --input: oklch(0.9 0.014 252);
+  --ring: oklch(0.45 0.155 256);
+
+  --chart-1: oklch(0.45 0.155 256);
+  --chart-2: oklch(0.7 0.185 47);
+  --chart-3: oklch(0.29 0.115 258);
+  --chart-4: oklch(0.62 0.14 155);
+  --chart-5: oklch(0.6 0.09 256);
+
+  --sidebar: oklch(0.26 0.105 258);
+  --sidebar-foreground: oklch(0.95 0.012 250);
+  --sidebar-primary: oklch(0.7 0.185 47);
+  --sidebar-primary-foreground: oklch(0.21 0.05 258);
+  --sidebar-accent: oklch(0.33 0.11 258);
+  --sidebar-accent-foreground: oklch(0.98 0.006 250);
+  --sidebar-border: oklch(0.36 0.09 258);
+  --sidebar-ring: oklch(0.7 0.185 47);
+}
+
+.dark {
+  --background: oklch(0.18 0.05 258);
+  --foreground: oklch(0.97 0.008 250);
+  --card: oklch(0.23 0.06 258);
+  --card-foreground: oklch(0.97 0.008 250);
+  --popover: oklch(0.23 0.06 258);
+  --popover-foreground: oklch(0.97 0.008 250);
+  --primary: oklch(0.66 0.15 254);
+  --primary-foreground: oklch(0.16 0.045 258);
+  --primary-deep: oklch(0.24 0.08 258);
+  --primary-soft: oklch(0.3 0.07 256);
+  --secondary: oklch(0.28 0.06 258);
+  --secondary-foreground: oklch(0.97 0.008 250);
+  --muted: oklch(0.28 0.05 258);
+  --muted-foreground: oklch(0.72 0.03 254);
+  --accent: oklch(0.74 0.175 52);
+  --accent-foreground: oklch(0.18 0.05 258);
+  --accent-soft: oklch(0.32 0.07 60);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.66 0.15 254);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Wordmark / eyebrow treatment used across section headers */
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+@utility surface-deep {
+  background: linear-gradient(
+    140deg,
+    var(--color-primary-deep),
+    color-mix(in oklab, var(--color-primary) 80%, var(--color-primary-deep))
+  );
+  color: var(--color-primary-foreground);
+}
+
+@utility hairline-grid {
+  background-image: linear-gradient(
+      to right,
+      color-mix(in oklab, var(--color-border) 70%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-border) 70%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 72px 72px;
+}
+
+@utility ken-burns {
+  animation: ken-burns 12s ease-out forwards;
+}
+
+@keyframes ken-burns {
+  from {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.14) translate3d(-1.2%, -1%, 0);
+  }
+}
