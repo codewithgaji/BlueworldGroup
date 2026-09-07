@@ -1,147 +1,128 @@
-import { useEffect, useRef, useState } from "react";
-import type { GlobeMarker } from "@/data/globe-content";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Globe as GlobeIcon, Image as ImageIcon } from "lucide-react";
+import type { GlobeMarker } from "@/components/brand/globe-scene";
+import { geoJsonToDots, type LatLng } from "@/lib/geo-dots";
+
+// react-three-fiber/three touch WebGL/window at import time, so the scene
+// must only ever load client-side. React.lazy + <Suspense> keeps it inside
+// the existing tree (no second root) and skips it entirely during SSR.
+const GlobeScene = lazy(() => import("@/components/brand/globe-scene"));
 
 interface BrandGlobeProps {
   size?: number;
   markers: GlobeMarker[];
+  /** Which view shows first. Defaults to the animated globe. */
   mode?: "animated" | "static";
-  /** Set to false for tight spaces like a navbar — hides the curved wordmark, keeps just the orb. */
+  /** Set to false for tight spaces like a navbar — hides the curved wordmark, keeps just the square. */
   showText?: boolean;
+  /** Back-compat alias for showText, used by the nav-bar instance. */
+  showMotto?: boolean;
+  /** Lets a tight nav instance disable drag/orbit + the toggle button entirely. */
+  interactive?: boolean;
+  /** Hide the on/off toggle button even when interactive. */
+  showToggle?: boolean;
 }
 
-// react-globe.gl touches WebGL/window at import time, so it must only ever be
-// loaded client-side. A plain dynamic import() swapped into state — not a
-// second ReactDOM root — keeps it inside the existing React tree.
-function InteractiveGlobe({ size = 340, markers }: { size?: number; markers: GlobeMarker[] }) {
-  const globeRef = useRef<any>(null);
-  const [GlobeComponent, setGlobeComponent] = useState<any>(null);
-  const [hexData, setHexData] = useState<any[]>([]);
+let cachedDots: LatLng[] | null = null;
+
+function useWorldDots(enabled: boolean) {
+  const [dots, setDots] = useState<LatLng[]>(cachedDots ?? []);
 
   useEffect(() => {
+    if (!enabled || cachedDots) return;
     let cancelled = false;
 
-    import("react-globe.gl")
-      .then((mod: any) => {
-        // Interop guard: some bundler configs resolve this package's default
-        // export as undefined even though the import itself succeeds silently.
-        const Comp = mod?.default ?? mod;
-        if (!cancelled) {
-          if (!Comp) {
-            console.error("[BrandGlobe] react-globe.gl loaded but no component found on the module", mod);
-          }
-          setGlobeComponent(() => Comp);
-        }
+    fetch("/data/world-countries.geojson")
+      .then((r) => r.json())
+      .then((geo) => {
+        const computed = geoJsonToDots(geo, 3.2);
+        cachedDots = computed;
+        if (!cancelled) setDots(computed);
       })
       .catch((err) => {
-        console.error("[BrandGlobe] failed to load react-globe.gl", err);
+        console.error("[BrandGlobe] failed to load world-countries.geojson", err);
       });
-
-    if ((window as any).__world_hex_data) {
-      setHexData((window as any).__world_hex_data);
-    } else {
-      fetch("/data/world-countries.geojson")
-        .then((r) => r.json())
-        .then((geo) => {
-          (window as any).__world_hex_data = geo.features;
-          if (!cancelled) setHexData(geo.features);
-        })
-        .catch(() => {
-          if (!cancelled) setHexData([]);
-        });
-    }
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
-  useEffect(() => {
-    if (!globeRef.current) return;
-    const controls = globeRef.current.controls?.();
-    if (controls) {
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.6;
-      controls.enableZoom = false;
-    }
-    globeRef.current.pointOfView?.({ altitude: 2.2 });
-  }, [GlobeComponent]);
-
-  if (!GlobeComponent) {
-    return (
-      <div
-        className="animate-pulse rounded-full"
-        style={{ width: size, height: size, background: "rgba(255,255,255,0.2)" }}
-      />
-    );
-  }
-
-  const Globe = GlobeComponent;
-
-  return (
-    <Globe
-      ref={globeRef}
-      width={size}
-      height={size}
-      backgroundColor="rgba(0,0,0,0)"
-      showGlobe={false}
-      showAtmosphere={false}
-      hexPolygonsData={hexData}
-      hexPolygonResolution={3}
-      hexPolygonMargin={0.3}
-      hexPolygonColor={() => "#FFFFFF"}
-      pointsData={markers}
-      pointLat={(d: any) => d.lat}
-      pointLng={(d: any) => d.lng}
-      pointColor={() => "#0f172a"}
-      pointAltitude={0.02}
-      pointRadius={0.45}
-      pointLabel={(d: any) =>
-        `<div style="background:#0f172a;color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;white-space:nowrap;">${d.label}</div>`
-      }
-    />
-  );
+  return dots;
 }
 
-export function BrandGlobe({ size = 340, markers, mode = "animated", showText = true }: BrandGlobeProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+export function BrandGlobe({
+  size = 340,
+  markers,
+  mode = "animated",
+  showText = true,
+  showMotto,
+  interactive = true,
+  showToggle = true,
+}: BrandGlobeProps) {
+  const wordmark = showMotto ?? showText;
+  const [view, setView] = useState<"animated" | "static">(interactive ? mode : "static");
+  const dots = useWorldDots(interactive && view === "animated");
 
-  const wrapperSize = size + 40;
+  const canToggle = interactive && showToggle;
+
+  const wrapperSize = size;
   const textBoxWidth = wrapperSize + 50;
   const textBoxHeight = 56;
 
-  const orb = (
+  const square = (
     <div
-      className="relative flex items-center justify-center overflow-hidden rounded-full"
+      className="relative flex items-center justify-center overflow-hidden rounded-3xl"
       style={{
         width: wrapperSize,
         height: wrapperSize,
-        background: "radial-gradient(circle at 35% 30%, #F5A623 0%, #E8871E 60%, #D9760F 100%)",
+        background: "linear-gradient(160deg, #F5A623 0%, #EE8A1E 55%, #DD7412 100%)",
       }}
     >
-      {mode === "static" || !mounted ? (
+      {view === "static" || !interactive ? (
         <img
           src="/blueworld.png"
           alt="Blue World Cosmetics"
-          style={{ width: size * 0.72, height: size * 0.72, objectFit: "contain" }}
+          className="h-full w-full object-cover"
           draggable={false}
         />
       ) : (
-        <InteractiveGlobe size={size} markers={markers} />
+        <Suspense
+          fallback={
+            <div
+              className="animate-pulse rounded-full bg-white/20"
+              style={{ width: size * 0.6, height: size * 0.6 }}
+            />
+          }
+        >
+          <GlobeScene dots={dots} markers={markers} size={size * 0.82} interactive />
+        </Suspense>
+      )}
+
+      {canToggle && (
+        <button
+          type="button"
+          onClick={() => setView((v) => (v === "animated" ? "static" : "animated"))}
+          aria-label={view === "animated" ? "Show logo" : "Show interactive globe"}
+          title={view === "animated" ? "Show logo" : "Show interactive globe"}
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-primary-deep/70 text-primary-foreground backdrop-blur transition-colors hover:bg-primary-deep"
+        >
+          {view === "animated" ? <ImageIcon size={16} /> : <GlobeIcon size={16} />}
+        </button>
       )}
     </div>
   );
 
-  // Nav / tight-space usage: just the orb, no wordmark, no extra vertical space reserved.
-  if (!showText) {
-    return orb;
+  // Nav / tight-space usage: just the square, no wordmark, no extra vertical space reserved.
+  if (!wordmark) {
+    return square;
   }
 
   return (
     <div className="flex flex-col items-center" style={{ width: textBoxWidth }}>
-      {orb}
+      {square}
 
-      {/* Curved wordmark — normal document flow below the circle, single arc sized to fit its own viewBox */}
+      {/* Curved wordmark — normal document flow below the square, single arc sized to fit its own viewBox */}
       <svg
         width={textBoxWidth}
         height={textBoxHeight}

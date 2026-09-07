@@ -1,11 +1,14 @@
 /**
  * WebGL brand globe (react-three-fiber). Client-only — loaded lazily by
- * <BrandGlobe /> so it never runs during SSR.
+ * <BrandGlobe /> so it never runs during SSR. Renders the world as a
+ * dot-matrix (Cloudflare-style) built from a countries GeoJSON, with a few
+ * glowing markers + arcs for the places the brand actually ships to.
  */
 import { Suspense, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Html, OrbitControls } from "@react-three/drei";
+import { Html, OrbitControls, Points, PointMaterial } from "@react-three/drei";
 import * as THREE from "three";
+import type { LatLng } from "@/lib/geo-dots";
 
 export interface GlobeMarker {
   name: string;
@@ -24,12 +27,50 @@ function latLngToVec3(lat: number, lng: number, radius: number) {
   );
 }
 
+/** The dot-matrix land mask — one static BufferGeometry of points. */
+function DotMatrix({ dots, radius }: { dots: LatLng[]; radius: number }) {
+  const positions = useMemo(() => {
+    const arr = new Float32Array(dots.length * 3);
+    dots.forEach((d, i) => {
+      const v = latLngToVec3(d.lat, d.lng, radius);
+      arr[i * 3] = v.x;
+      arr[i * 3 + 1] = v.y;
+      arr[i * 3 + 2] = v.z;
+    });
+    return arr;
+  }, [dots, radius]);
+
+  if (dots.length === 0) return null;
+
+  return (
+    <Points positions={positions} stride={3}>
+      <PointMaterial
+        color="#bcd9ff"
+        size={radius * 0.028}
+        sizeAttenuation
+        transparent
+        opacity={0.85}
+        depthWrite={false}
+      />
+    </Points>
+  );
+}
+
 function Marker({ marker, radius }: { marker: GlobeMarker; radius: number }) {
   const [hovered, setHovered] = useState(false);
+  const pulseRef = useRef<THREE.Mesh>(null);
   const position = useMemo(
-    () => latLngToVec3(marker.lat, marker.lng, radius * 1.02),
+    () => latLngToVec3(marker.lat, marker.lng, radius * 1.015),
     [marker.lat, marker.lng, radius],
   );
+
+  useFrame(({ clock }) => {
+    if (!pulseRef.current) return;
+    const t = (clock.getElapsedTime() * 0.9) % 1;
+    const scale = 1 + t * 1.8;
+    pulseRef.current.scale.setScalar(scale);
+    (pulseRef.current.material as THREE.MeshBasicMaterial).opacity = (1 - t) * 0.5;
+  });
 
   return (
     <group position={position}>
@@ -39,17 +80,13 @@ function Marker({ marker, radius }: { marker: GlobeMarker; radius: number }) {
           setHovered(true);
         }}
         onPointerOut={() => setHovered(false)}
-        onClick={(e) => {
-          e.stopPropagation();
-          setHovered((v) => !v);
-        }}
       >
-        <sphereGeometry args={[radius * 0.045, 16, 16]} />
-        <meshBasicMaterial color={hovered ? "#ffffff" : "#f28022"} />
+        <sphereGeometry args={[radius * 0.05, 16, 16]} />
+        <meshBasicMaterial color={hovered ? "#ffffff" : "#f5a623"} />
       </mesh>
-      <mesh>
-        <sphereGeometry args={[radius * 0.075, 16, 16]} />
-        <meshBasicMaterial color="#f28022" transparent opacity={hovered ? 0.5 : 0.22} />
+      <mesh ref={pulseRef}>
+        <sphereGeometry args={[radius * 0.05, 16, 16]} />
+        <meshBasicMaterial color="#f5a623" transparent opacity={0.4} />
       </mesh>
       {hovered && (
         <Html center distanceFactor={6} zIndexRange={[10, 0]}>
@@ -66,7 +103,7 @@ function Marker({ marker, radius }: { marker: GlobeMarker; radius: number }) {
 }
 
 function Arc({ from, to, radius }: { from: GlobeMarker; to: GlobeMarker; radius: number }) {
-  const points = useMemo(() => {
+  const geometry = useMemo(() => {
     const start = latLngToVec3(from.lat, from.lng, radius * 1.01);
     const end = latLngToVec3(to.lat, to.lng, radius * 1.01);
     const mid = start
@@ -74,18 +111,17 @@ function Arc({ from, to, radius }: { from: GlobeMarker; to: GlobeMarker; radius:
       .add(end)
       .multiplyScalar(0.5)
       .normalize()
-      .multiplyScalar(radius * 1.45);
-    return new THREE.QuadraticBezierCurve3(start, mid, end).getPoints(48);
+      .multiplyScalar(radius * 1.4);
+    const points = new THREE.QuadraticBezierCurve3(start, mid, end).getPoints(48);
+    return new THREE.BufferGeometry().setFromPoints(points);
   }, [from, to, radius]);
-
-  const geometry = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points]);
 
   return (
     <primitive
       object={
         new THREE.Line(
           geometry,
-          new THREE.LineBasicMaterial({ color: "#f28022", transparent: true, opacity: 0.55 }),
+          new THREE.LineBasicMaterial({ color: "#f5a623", transparent: true, opacity: 0.5 }),
         )
       }
     />
@@ -93,10 +129,12 @@ function Arc({ from, to, radius }: { from: GlobeMarker; to: GlobeMarker; radius:
 }
 
 function GlobeBody({
+  dots,
   markers,
   radius,
   autoRotate,
 }: {
+  dots: LatLng[];
   markers: GlobeMarker[];
   radius: number;
   autoRotate: boolean;
@@ -104,25 +142,28 @@ function GlobeBody({
   const group = useRef<THREE.Group>(null);
 
   useFrame((_, delta) => {
-    if (autoRotate && group.current) group.current.rotation.y += delta * 0.16;
+    if (autoRotate && group.current) group.current.rotation.y += delta * 0.14;
   });
 
   const home = markers[0];
 
   return (
     <group ref={group}>
+      {/* Faint inner sphere for depth — kept mostly transparent so the dots read as "sleek", not solid */}
       <mesh>
-        <sphereGeometry args={[radius, 64, 64]} />
-        <meshStandardMaterial color="#1b4f9c" roughness={0.45} metalness={0.15} />
+        <sphereGeometry args={[radius * 0.985, 48, 48]} />
+        <meshBasicMaterial color="#0f2c5c" transparent opacity={0.18} />
       </mesh>
-      {/* Latitude / longitude lattice — the flat logo's globe grid, in 3D */}
+      {/* Longitude/latitude wire shell */}
       <lineSegments>
-        <edgesGeometry args={[new THREE.SphereGeometry(radius * 1.003, 24, 16)]} />
-        <lineBasicMaterial color="#8ec5ff" transparent opacity={0.45} />
+        <edgesGeometry args={[new THREE.SphereGeometry(radius * 1.001, 20, 14)]} />
+        <lineBasicMaterial color="#6fa8f5" transparent opacity={0.12} />
       </lineSegments>
+      <DotMatrix dots={dots} radius={radius} />
+      {/* Soft outer glow rim */}
       <mesh>
-        <sphereGeometry args={[radius * 1.07, 32, 32]} />
-        <meshBasicMaterial color="#f28022" transparent opacity={0.07} side={THREE.BackSide} />
+        <sphereGeometry args={[radius * 1.08, 32, 32]} />
+        <meshBasicMaterial color="#f5a623" transparent opacity={0.05} side={THREE.BackSide} />
       </mesh>
       {markers.map((m) => (
         <Marker key={m.name} marker={m} radius={radius} />
@@ -134,10 +175,12 @@ function GlobeBody({
 }
 
 export default function GlobeScene({
+  dots = [],
   markers = [],
   interactive = true,
   size = 220,
 }: {
+  dots?: LatLng[];
   markers?: GlobeMarker[];
   interactive?: boolean;
   size?: number;
@@ -147,12 +190,13 @@ export default function GlobeScene({
       style={{ width: size, height: size }}
       camera={{ position: [0, 0, 4.2], fov: 45 }}
       dpr={[1, 2]}
+      gl={{ alpha: true, antialias: true }}
     >
       <ambientLight intensity={1.1} />
-      <directionalLight position={[3, 2, 4]} intensity={1.6} />
-      <directionalLight position={[-4, -1, -2]} intensity={0.5} color="#f28022" />
+      <directionalLight position={[3, 2, 4]} intensity={1.2} />
+      <directionalLight position={[-4, -1, -2]} intensity={0.4} color="#f5a623" />
       <Suspense fallback={null}>
-        <GlobeBody markers={markers} radius={1.35} autoRotate />
+        <GlobeBody dots={dots} markers={markers} radius={1.35} autoRotate />
       </Suspense>
       {interactive && (
         <OrbitControls
