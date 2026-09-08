@@ -77,9 +77,7 @@ function HomePage() {
       {/* Globe section */}
       <Section>
         <div className="grid items-center gap-14 lg:grid-cols-[1fr_1.1fr]">
-          <div className="flex justify-center">
-            <BrandGlobe size={340} markers={REACH_MARKERS} />
-          </div>
+            <BrandGlobe markers={REACH_MARKERS} maxWidthClass="max-w-md"/>
           <div>
             <SectionHeading
               eyebrow="God Is Our Strength"
