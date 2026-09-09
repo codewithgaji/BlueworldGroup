@@ -1,15 +1,17 @@
 /**
  * JWT-style admin auth.
  *
- * `login()` posts to POST /auth/login and, when the backend is unreachable,
- * falls back to a mock session for the seeded admin account so the CMS is
- * demonstrable offline.
+ * `login()` posts to POST /auth/login. If the backend is unreachable, it
+ * falls back to a mock session for the seeded demo account ONLY — and that
+ * fallback is loud: it logs a console warning and throws a distinguishable
+ * error the caller can use to show the user this is not a real session.
  */
 import { useSyncExternalStore } from "react";
-import { ENDPOINTS, readTokens, submitWithMock, writeTokens } from "@/lib/api";
+import { ApiError, ENDPOINTS, readTokens, submitWithMock, writeTokens } from "@/lib/api";
 import type { AdminUser, LoginResponse } from "@/lib/types";
 
 const USER_KEY = "bwc.admin.user";
+const DEMO_FLAG_KEY = "bwc.admin.demoSession";
 
 /** Seeded credentials used only when the FastAPI backend is not reachable. */
 export const DEMO_CREDENTIALS = {
@@ -61,6 +63,12 @@ export function useAdminUser(): AdminUser | null {
   );
 }
 
+/** True when the current session is the offline demo fallback, not a real backend login. */
+export function isDemoSession(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(DEMO_FLAG_KEY) === "1";
+}
+
 export async function login(email: string, password: string): Promise<AdminUser> {
   const mock: LoginResponse = {
     accessToken: `mock.${btoa(email)}.access`,
@@ -70,25 +78,49 @@ export async function login(email: string, password: string): Promise<AdminUser>
     user: { ...DEMO_USER, email },
   };
 
-  const isDemo =
+  const isDemoCreds =
     email.trim().toLowerCase() === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password;
 
   let result: LoginResponse;
+  let usedFallback = false;
+
   try {
     result = await submitWithMock<{ email: string; password: string }, LoginResponse>(
       ENDPOINTS.authLogin,
       { email, password },
-      isDemo ? mock : (null as unknown as LoginResponse),
+      isDemoCreds ? mock : (null as unknown as LoginResponse),
     );
-  } catch {
+    // submitWithMock only returns the mock object on a genuine network
+    // failure (backend unreachable) — detect that by identity/shape rather
+    // than trusting a flag, since a real backend could theoretically also
+    // return isDemoCreds' user by coincidence of email.
+    usedFallback = isDemoCreds && result?.accessToken?.startsWith("mock.");
+  } catch (error) {
+    if (error instanceof ApiError) {
+      // Backend is up and rejected the credentials for real — don't fall
+      // back, don't pretend, just surface the real failure.
+      throw new Error("Invalid email or password.");
+    }
     result = null as unknown as LoginResponse;
   }
 
   if (!result) throw new Error("Invalid email or password.");
 
+  if (usedFallback) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[auth] Backend unreachable — signed in with the OFFLINE DEMO session. " +
+        "This is not a real account and will not reflect real data.",
+    );
+  }
+
   writeTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken });
   cached = result.user;
   window.localStorage.setItem(USER_KEY, JSON.stringify(result.user));
+  if (typeof window !== "undefined") {
+    if (usedFallback) window.localStorage.setItem(DEMO_FLAG_KEY, "1");
+    else window.localStorage.removeItem(DEMO_FLAG_KEY);
+  }
   emit();
   return result.user;
 }
@@ -96,6 +128,9 @@ export async function login(email: string, password: string): Promise<AdminUser>
 export function logout() {
   writeTokens(null);
   cached = null;
-  if (typeof window !== "undefined") window.localStorage.removeItem(USER_KEY);
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(USER_KEY);
+    window.localStorage.removeItem(DEMO_FLAG_KEY);
+  }
   emit();
 }

@@ -2,15 +2,19 @@
  * Typed API client layer.
  *
  * Every read goes through `fetchWithFallback`: it tries the real FastAPI
- * endpoint and, if the backend is unreachable / slow / errors, silently falls
- * back to the local placeholder dataset so the site never renders empty.
+ * endpoint and, if the backend is unreachable / times out, falls back to the
+ * local placeholder dataset so the site never renders empty. Genuine backend
+ * errors (4xx/5xx with a real response) are now logged to the console instead
+ * of being swallowed silently, so integration bugs are visible while testing.
  *
- * Swap-in later = point VITE_API_BASE_URL at the FastAPI host. No component
- * changes required.
+ * Point VITE_API_BASE_URL at the FastAPI host, e.g.:
+ *   VITE_API_BASE_URL=http://localhost:8000
+ * (the previous "/api" default assumed a reverse-proxy prefix your FastAPI
+ * routes don't actually use — they're mounted at root, e.g. /cms/hero-slides).
  */
 
 export const API_BASE_URL =
-  (import.meta.env["VITE_API_BASE_URL"] as string | undefined) ?? "/api";
+  (import.meta.env["VITE_API_BASE_URL"] as string | undefined) ?? "http://localhost:8000";
 
 const DEFAULT_TIMEOUT_MS = 4000;
 
@@ -29,7 +33,22 @@ export const ENDPOINTS = {
   authLogin: "/auth/login",
   authRefresh: "/auth/refresh",
   authMe: "/auth/me",
+  requestAccess: "/auth/request-access",
+  accessRequests: "/auth/access-requests",
 } as const;
+
+/** Thrown when the backend actually responded but rejected the request. */
+export class ApiError extends Error {
+  status: number;
+  detail: unknown;
+
+  constructor(status: number, detail: unknown, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
 
 export async function apiFetch<T>(
   path: string,
@@ -48,7 +67,16 @@ export async function apiFetch<T>(
         ...authHeader(),
       },
     });
-    if (!res.ok) throw new Error(`API ${res.status} on ${path}`);
+        if (!res.ok) {
+      let detail: unknown = null;
+      try {
+        detail = await res.json();
+      } catch {
+        // response wasn't JSON — leave detail null
+      }
+      throw new ApiError(res.status, detail, `API ${res.status} on ${path}`);
+    }
+    if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
   } finally {
     clearTimeout(timer);
@@ -57,7 +85,9 @@ export async function apiFetch<T>(
 
 /**
  * Read helper. Never throws — resolves to `fallback` when the backend is not
- * yet available. Accepts either a bare array or `{ items: [...] }`.
+ * reachable. Accepts either a bare array or `{ items: [...] }`. Real errors
+ * are logged to the console so they're visible during development instead of
+ * silently disappearing.
  */
 export async function fetchWithFallback<T>(path: string, fallback: T): Promise<T> {
   try {
@@ -70,13 +100,19 @@ export async function fetchWithFallback<T>(path: string, fallback: T): Promise<T
     if (Array.isArray(data) && data.length === 0) return fallback;
     if (data == null) return fallback;
     return data as T;
-  } catch {
-    // Backend offline / timeout / 5xx -> local placeholder dataset.
+  } catch (err) {
+    console.warn(`[api] GET ${path} failed, using placeholder data:`, err);
     return fallback;
   }
 }
 
-/** Writes optimistically resolve to a mock success when the backend is absent. */
+/**
+ * Write helper for public-facing forms (contact, newsletter, careers) where a
+ * missing backend shouldn't block the UI demo. Falls back to a mock success
+ * ONLY on network failure (backend unreachable/timeout) — a real validation
+ * or server error from a reachable backend is re-thrown so the form can show
+ * the actual problem instead of lying about success.
+ */
 export async function submitWithMock<TBody, TResult>(
   path: string,
   body: TBody,
@@ -84,7 +120,12 @@ export async function submitWithMock<TBody, TResult>(
 ): Promise<TResult> {
   try {
     return await apiFetch<TResult>(path, { method: "POST", body: JSON.stringify(body) });
-  } catch {
+  } catch (err) {
+    if (err instanceof ApiError) {
+      // Backend is up and responded — this is a real error, don't mask it.
+      throw err;
+    }
+    console.warn(`[api] POST ${path} unreachable, using mock result:`, err);
     await new Promise((r) => setTimeout(r, 600));
     return mockResult;
   }

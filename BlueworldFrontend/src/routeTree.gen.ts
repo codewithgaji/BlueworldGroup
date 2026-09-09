@@ -17,6 +17,7 @@ import { Route as AboutLeadershipRouteImport } from './routes/about.leadership'
 import { Route as AboutVisionMissionRouteImport } from './routes/about.vision-mission'
 import { Route as AboutWhoWeAreRouteImport } from './routes/about.who-we-are'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAccessRequestsRouteImport } from './routes/admin.access-requests'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminBusinessUnitsRouteImport } from './routes/admin.business-units'
 import { Route as AdminHeroSlidesRouteImport } from './routes/admin.hero-slides'
@@ -24,6 +25,7 @@ import { Route as AdminJobsRouteImport } from './routes/admin.jobs'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminMediaRouteImport } from './routes/admin.media'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminRequestAccessRouteImport } from './routes/admin.request-access'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminTeamRouteImport } from './routes/admin.team'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
@@ -72,6 +74,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAccessRequestsRoute = AdminAccessRequestsRouteImport.update({
+  id: '/admin/access-requests',
+  path: '/admin/access-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminBlogRoute = AdminBlogRouteImport.update({
   id: '/admin/blog',
   path: '/admin/blog',
@@ -105,6 +112,11 @@ const AdminMediaRoute = AdminMediaRouteImport.update({
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/admin/products',
   path: '/admin/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRequestAccessRoute = AdminRequestAccessRouteImport.update({
+  id: '/admin/request-access',
+  path: '/admin/request-access',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
@@ -150,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/about/leadership': typeof AboutLeadershipRoute
   '/about/vision-mission': typeof AboutVisionMissionRoute
   '/about/who-we-are': typeof AboutWhoWeAreRoute
+  '/admin/access-requests': typeof AdminAccessRequestsRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/business-units': typeof AdminBusinessUnitsRoute
   '/admin/hero-slides': typeof AdminHeroSlidesRoute
@@ -157,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/request-access': typeof AdminRequestAccessRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/team': typeof AdminTeamRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -174,6 +188,7 @@ export interface FileRoutesByTo {
   '/about/leadership': typeof AboutLeadershipRoute
   '/about/vision-mission': typeof AboutVisionMissionRoute
   '/about/who-we-are': typeof AboutWhoWeAreRoute
+  '/admin/access-requests': typeof AdminAccessRequestsRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/business-units': typeof AdminBusinessUnitsRoute
   '/admin/hero-slides': typeof AdminHeroSlidesRoute
@@ -181,6 +196,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/request-access': typeof AdminRequestAccessRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/team': typeof AdminTeamRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -199,6 +215,7 @@ export interface FileRoutesById {
   '/about/leadership': typeof AboutLeadershipRoute
   '/about/vision-mission': typeof AboutVisionMissionRoute
   '/about/who-we-are': typeof AboutWhoWeAreRoute
+  '/admin/access-requests': typeof AdminAccessRequestsRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/business-units': typeof AdminBusinessUnitsRoute
   '/admin/hero-slides': typeof AdminHeroSlidesRoute
@@ -206,6 +223,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/request-access': typeof AdminRequestAccessRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/team': typeof AdminTeamRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -225,6 +243,7 @@ export interface FileRouteTypes {
     | '/about/leadership'
     | '/about/vision-mission'
     | '/about/who-we-are'
+    | '/admin/access-requests'
     | '/admin/blog'
     | '/admin/business-units'
     | '/admin/hero-slides'
@@ -232,6 +251,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/media'
     | '/admin/products'
+    | '/admin/request-access'
     | '/admin/settings'
     | '/admin/team'
     | '/blog/$slug'
@@ -249,6 +269,7 @@ export interface FileRouteTypes {
     | '/about/leadership'
     | '/about/vision-mission'
     | '/about/who-we-are'
+    | '/admin/access-requests'
     | '/admin/blog'
     | '/admin/business-units'
     | '/admin/hero-slides'
@@ -256,6 +277,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/media'
     | '/admin/products'
+    | '/admin/request-access'
     | '/admin/settings'
     | '/admin/team'
     | '/blog/$slug'
@@ -273,6 +295,7 @@ export interface FileRouteTypes {
     | '/about/leadership'
     | '/about/vision-mission'
     | '/about/who-we-are'
+    | '/admin/access-requests'
     | '/admin/blog'
     | '/admin/business-units'
     | '/admin/hero-slides'
@@ -280,6 +303,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/media'
     | '/admin/products'
+    | '/admin/request-access'
     | '/admin/settings'
     | '/admin/team'
     | '/blog/$slug'
@@ -298,6 +322,7 @@ export interface RootRouteChildren {
   AboutLeadershipRoute: typeof AboutLeadershipRoute
   AboutVisionMissionRoute: typeof AboutVisionMissionRoute
   AboutWhoWeAreRoute: typeof AboutWhoWeAreRoute
+  AdminAccessRequestsRoute: typeof AdminAccessRequestsRoute
   AdminBlogRoute: typeof AdminBlogRoute
   AdminBusinessUnitsRoute: typeof AdminBusinessUnitsRoute
   AdminHeroSlidesRoute: typeof AdminHeroSlidesRoute
@@ -305,6 +330,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMediaRoute: typeof AdminMediaRoute
   AdminProductsRoute: typeof AdminProductsRoute
+  AdminRequestAccessRoute: typeof AdminRequestAccessRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTeamRoute: typeof AdminTeamRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -374,6 +400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/access-requests': {
+      id: '/admin/access-requests'
+      path: '/admin/access-requests'
+      fullPath: '/admin/access-requests'
+      preLoaderRoute: typeof AdminAccessRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/blog': {
       id: '/admin/blog'
       path: '/admin/blog'
@@ -421,6 +454,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/products'
       fullPath: '/admin/products'
       preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/request-access': {
+      id: '/admin/request-access'
+      path: '/admin/request-access'
+      fullPath: '/admin/request-access'
+      preLoaderRoute: typeof AdminRequestAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/settings': {
@@ -482,6 +522,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutLeadershipRoute: AboutLeadershipRoute,
   AboutVisionMissionRoute: AboutVisionMissionRoute,
   AboutWhoWeAreRoute: AboutWhoWeAreRoute,
+  AdminAccessRequestsRoute: AdminAccessRequestsRoute,
   AdminBlogRoute: AdminBlogRoute,
   AdminBusinessUnitsRoute: AdminBusinessUnitsRoute,
   AdminHeroSlidesRoute: AdminHeroSlidesRoute,
@@ -489,6 +530,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminMediaRoute: AdminMediaRoute,
   AdminProductsRoute: AdminProductsRoute,
+  AdminRequestAccessRoute: AdminRequestAccessRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminTeamRoute: AdminTeamRoute,
   BlogSlugRoute: BlogSlugRoute,

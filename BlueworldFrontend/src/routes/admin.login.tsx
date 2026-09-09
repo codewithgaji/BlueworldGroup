@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { DEMO_CREDENTIALS, login, useAdminUser } from "@/hooks/use-admin-auth";
+import { isDemoSession, login, useAdminUser } from "@/hooks/use-admin-auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/login")({
@@ -20,8 +20,8 @@ export const Route = createFileRoute("/admin/login")({
 function AdminLoginPage() {
   const navigate = useNavigate();
   const user = useAdminUser();
-  const [email, setEmail] = useState(DEMO_CREDENTIALS.email);
-  const [password, setPassword] = useState(DEMO_CREDENTIALS.password);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
   const [hydrated, setHydrated] = useState(false);
@@ -36,7 +36,11 @@ function AdminLoginPage() {
     setBusy(true);
     try {
       await login(email, password);
-      toast.success("Signed in");
+      if (isDemoSession()) {
+        toast.warning("Signed in with the offline demo session — backend is unreachable, this is not real data.");
+      } else {
+        toast.success("Signed in");
+      }
       void navigate({ to: "/admin" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Sign in failed");
@@ -104,11 +108,11 @@ function AdminLoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 rounded-xl bg-secondary p-4 text-xs leading-relaxed text-muted-foreground">
-          Demo account (used while the API is offline):
-          <br />
-          <span className="font-semibold text-primary-deep">{DEMO_CREDENTIALS.email}</span> /{" "}
-          <span className="font-semibold text-primary-deep">{DEMO_CREDENTIALS.password}</span>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Need access?{" "}
+          <Link to="/admin/request-access" className="font-semibold text-primary-deep">
+            Request an account
+          </Link>
         </p>
       </div>
     </div>

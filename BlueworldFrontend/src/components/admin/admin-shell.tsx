@@ -11,6 +11,7 @@ import {
   Sparkles,
   Users,
   Briefcase,
+  UserCheck,
 } from "lucide-react";
 import { getAdminUser, logout, useAdminUser } from "@/hooks/use-admin-auth";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ export const ADMIN_NAV = [
   { label: "Blog Posts", to: "/admin/blog", icon: Newspaper },
   { label: "Jobs", to: "/admin/jobs", icon: Briefcase },
   { label: "Media", to: "/admin/media", icon: Images },
+  { label: "Access Requests", to: "/admin/access-requests", icon: UserCheck },
   { label: "Site Settings", to: "/admin/settings", icon: Settings },
 ] as const;
 
@@ -42,8 +44,6 @@ export function AdminShell({
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  // The session lives in localStorage, so it is only readable after hydration —
-  // redirecting before that would bounce a signed-in admin to the login screen.
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
 

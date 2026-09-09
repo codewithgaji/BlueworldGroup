@@ -1,48 +1,53 @@
-from pydantic import BaseModel, EmailStr
 import uuid
+from datetime import datetime
+
+from pydantic import EmailStr
 
 from models.admin_user import AdminRole, AdminStatus
+from schemas.base import CamelModel
 
 
-class LoginRequest(BaseModel):
+class LoginRequest(CamelModel):
     email: EmailStr
     password: str
 
 
-class AuthTokens(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-
-
-class AdminUserOut(BaseModel):
+class AdminUserOut(CamelModel):
     id: uuid.UUID
     email: EmailStr
     full_name: str | None = None
     role: AdminRole
     status: AdminStatus
     is_superuser: bool
-
-    class Config:
-        from_attributes = True
+    created_at: datetime
 
 
-class LoginResponse(BaseModel):
-    tokens: AuthTokens
+class LoginResponse(CamelModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
     user: AdminUserOut
 
 
-class RefreshRequest(BaseModel):
+class AuthTokens(CamelModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
+class RefreshRequest(CamelModel):
     refresh_token: str
 
 
-class RequestAccessRequest(BaseModel):
+class RequestAccessRequest(CamelModel):
     email: EmailStr
     password: str
     full_name: str | None = None
     requested_role: AdminRole
 
 
-class AccessDecision(BaseModel):
+class AccessDecision(CamelModel):
     approve: bool
-    role_override: AdminRole | None = None  # superuser can grant a different role than requested
+    role_override: AdminRole | None = None

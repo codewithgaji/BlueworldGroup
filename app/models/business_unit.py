@@ -2,7 +2,7 @@ import uuid
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import String, Text, Enum as SAEnum, DateTime, ForeignKey
+from sqlalchemy import String, Text, Integer, Enum as SAEnum, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -31,7 +31,10 @@ class BusinessUnit(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     tagline: Mapped[str] = mapped_column(String, nullable=True)
     summary: Mapped[str] = mapped_column(Text, nullable=True)
+    story: Mapped[str] = mapped_column(Text, nullable=True)
     hero_image: Mapped[str] = mapped_column(String, nullable=True)
+    accent: Mapped[str] = mapped_column(String, default="blue", nullable=False)
+    order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -50,7 +53,8 @@ class BusinessSubLine(Base):
     )
     slug: Mapped[BusinessSubLineSlug] = mapped_column(SAEnum(BusinessSubLineSlug), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    summary: Mapped[str] = mapped_column(Text, nullable=True)
+    tagline: Mapped[str] = mapped_column(String, nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
     hero_image: Mapped[str] = mapped_column(String, nullable=True)
 
     business_unit: Mapped["BusinessUnit"] = relationship(back_populates="sub_lines")
