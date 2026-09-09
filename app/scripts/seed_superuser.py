@@ -1,11 +1,7 @@
 import os
-from db.session import SessionLocal, engine
-from db.base import Base
+from db.session import SessionLocal
 from models.admin_user import AdminUser, AdminRole, AdminStatus
 from core.security import hash_password
-from models import admin_user  # noqa: F401
-
-Base.metadata.create_all(bind=engine)
 
 
 def get_credentials():

@@ -14,6 +14,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { getAdminUser, logout, useAdminUser } from "@/hooks/use-admin-auth";
+import { BrandGlobe } from "@/components/brand/brand-globe";
 import { cn } from "@/lib/utils";
 
 export const ADMIN_NAV = [
@@ -65,9 +66,7 @@ export function AdminShell({
     <div className="flex min-h-screen bg-secondary">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card lg:flex">
         <div className="flex h-20 items-center gap-3 border-b border-border px-6">
-          <span className="grid h-9 w-9 place-items-center rounded-full border-2 border-accent font-display text-xs font-black text-accent">
-            BW
-          </span>
+          <BrandGlobe size={36} interactive={false} showMotto={false} />
           <div className="leading-tight">
             <p className="font-display text-sm font-extrabold text-primary-deep">BLUE WORLD</p>
             <p className="text-[0.6rem] font-bold uppercase tracking-[0.22em] text-accent">CMS</p>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { apiFetch, ENDPOINTS, ApiError } from "@/lib/api";
+import { BrandGlobe } from "@/components/brand/brand-globe";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/request-access")({
@@ -70,7 +71,17 @@ function RequestAccessPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-secondary px-5 py-16">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lift">
-        <h1 className="font-display text-2xl font-bold text-primary-deep">Request CMS access</h1>
+        <div className="flex items-center gap-3">
+          <BrandGlobe size={56} interactive={false} showMotto={false} />
+          <div className="leading-tight">
+            <p className="font-display text-base font-extrabold text-primary-deep">BLUE WORLD</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.24em] text-accent">
+              Content Management
+            </p>
+          </div>
+        </div>
+
+        <h1 className="mt-8 font-display text-2xl font-bold text-primary-deep">Request CMS access</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Ask for editor or viewer access. An admin must approve your request before you can sign in.
         </p>

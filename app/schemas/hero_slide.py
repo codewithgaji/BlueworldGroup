@@ -1,13 +1,16 @@
-from pydantic import BaseModel
 import uuid
 
+from schemas.base import CamelModel
 
-class HeroSlideBase(BaseModel):
-    image_url: str
+
+class HeroSlideBase(CamelModel):
+    image: str
+    video_url: str | None = None
+    eyebrow: str | None = None
     title: str
-    subtitle: str | None = None
-    cta_text: str | None = None
-    cta_link: str | None = None
+    subtitle: str
+    cta_label: str
+    cta_href: str
     order: int = 0
 
 
@@ -17,6 +20,3 @@ class HeroSlideCreate(HeroSlideBase):
 
 class HeroSlideOut(HeroSlideBase):
     id: uuid.UUID
-
-    class Config:
-        from_attributes = True

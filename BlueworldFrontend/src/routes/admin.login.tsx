@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { isDemoSession, login, useAdminUser } from "@/hooks/use-admin-auth";
+import { BrandGlobe } from "@/components/brand/brand-globe";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/login")({
@@ -53,9 +54,7 @@ function AdminLoginPage() {
     <div className="grid min-h-screen place-items-center bg-secondary px-5 py-16">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lift">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-full border-2 border-accent font-display text-sm font-black text-accent">
-            BW
-          </span>
+          <BrandGlobe size={56} interactive={false} showMotto={false} />
           <div className="leading-tight">
             <p className="font-display text-base font-extrabold text-primary-deep">BLUE WORLD</p>
             <p className="text-[0.62rem] font-bold uppercase tracking-[0.24em] text-accent">
