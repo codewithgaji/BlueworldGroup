@@ -112,7 +112,36 @@ export async function uploadMedia(file: File): Promise<MediaAsset> {
   return (await res.json()) as MediaAsset;
 }
 
+/** Result of a fallback-aware read — tells the caller whether `data` is real or placeholder. */
+export interface SourcedResult<T> {
+  data: T;
+  /** true = came from the backend; false = local placeholder was used instead. */
+  isLive: boolean;
+}
 
+/**
+ * Same fallback behaviour as `fetchWithFallback`, but also reports whether
+ * the result actually came from the backend or is local placeholder content.
+ * Use this wherever the caller needs to know the difference (e.g. the admin
+ * panel warning banner) — use the plain `fetchWithFallback` wherever the
+ * caller just wants data and doesn't care where it came from.
+ */
+export async function fetchWithSource<T>(path: string, fallback: T): Promise<SourcedResult<T>> {
+  try {
+    const data = await apiFetch<unknown>(path, { method: "GET" });
+    if (data && typeof data === "object" && "items" in (data as Record<string, unknown>)) {
+      const items = (data as { items: unknown }).items;
+      if (Array.isArray(items) && items.length > 0) return { data: items as unknown as T, isLive: true };
+      return { data: fallback, isLive: false };
+    }
+    if (Array.isArray(data) && data.length === 0) return { data: fallback, isLive: false };
+    if (data == null) return { data: fallback, isLive: false };
+    return { data: data as T, isLive: true };
+  } catch (err) {
+    console.warn(`[api] GET ${path} failed, using placeholder data:`, err);
+    return { data: fallback, isLive: false };
+  }
+}
 
 /**
  * Read helper. Never throws — resolves to `fallback` when the backend is not
@@ -121,20 +150,8 @@ export async function uploadMedia(file: File): Promise<MediaAsset> {
  * silently disappearing.
  */
 export async function fetchWithFallback<T>(path: string, fallback: T): Promise<T> {
-  try {
-    const data = await apiFetch<unknown>(path, { method: "GET" });
-    if (data && typeof data === "object" && "items" in (data as Record<string, unknown>)) {
-      const items = (data as { items: unknown }).items;
-      if (Array.isArray(items) && items.length > 0) return items as unknown as T;
-      return fallback;
-    }
-    if (Array.isArray(data) && data.length === 0) return fallback;
-    if (data == null) return fallback;
-    return data as T;
-  } catch (err) {
-    console.warn(`[api] GET ${path} failed, using placeholder data:`, err);
-    return fallback;
-  }
+  const { data } = await fetchWithSource(path, fallback);
+  return data;
 }
 
 /**

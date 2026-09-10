@@ -1,7 +1,9 @@
+// blog.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ResourceManager, type ColumnConfig, type FieldConfig } from "@/components/admin/resource-manager";
 import { deleteItem, newId, upsertItem, useCollection } from "@/lib/cms-store";
+import { BLOG_CATEGORIES } from "@/data/placeholder-content";
 import type { BlogPost } from "@/lib/types";
 
 export const Route = createFileRoute("/admin/blog")({
@@ -16,6 +18,8 @@ export const Route = createFileRoute("/admin/blog")({
   }),
   component: BlogAdmin,
 });
+
+const POST_CATEGORIES = BLOG_CATEGORIES.filter((c) => c !== "All");
 
 function slugify(text: string): string {
   return text
@@ -39,7 +43,12 @@ const fields: FieldConfig<BlogPost>[] = [
   { name: "title", label: "Article title" },
   { name: "excerpt", label: "Short summary", type: "textarea", rows: 3, help: "A one- or two-sentence teaser shown on the blog listing page." },
   { name: "body", label: "Full article", type: "textarea", rows: 12, help: "Leave a blank line between paragraphs to start a new one." },
-  { name: "category", label: "Category" },
+  {
+    name: "category",
+    label: "Category",
+    type: "select",
+    options: POST_CATEGORIES,
+  },
   { name: "author", label: "Written by" },
   { name: "publishedAt", label: "Publish date", type: "date", help: "Pick the date this article should go live." },
   { name: "coverImage", label: "Cover photo", type: "image" },

@@ -19,6 +19,7 @@ import {
 import { getAdminUser, logout, useAdminUser } from "@/hooks/use-admin-auth";
 import { BrandGlobe } from "@/components/brand/brand-globe";
 import { cn } from "@/lib/utils";
+import { useCmsSourceAlerts } from "@/hooks/use-cms-source-alerts";
 
 export const ADMIN_NAV = [
   { label: "Dashboard", to: "/admin", icon: LayoutDashboard },
@@ -32,6 +33,8 @@ export const ADMIN_NAV = [
   { label: "Access Requests", to: "/admin/access-requests", icon: UserCheck },
   { label: "Site Settings", to: "/admin/settings", icon: Settings },
 ] as const;
+
+
 
 export function AdminShell({
   title,
@@ -48,6 +51,8 @@ export function AdminShell({
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  useCmsSourceAlerts();
+
 
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);

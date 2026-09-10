@@ -5,10 +5,14 @@
  * if the backend is unreachable, via fetchWithFallback). Writes hit the
  * authenticated /admin/* endpoints and require a signed-in admin/editor
  * session with the JWT already attached via api.ts's authHeader().
+ *
+ * Each collection also tracks a `dataSource` ("live" | "placeholder") so
+ * callers — specifically the admin panel — can tell real backend data apart
+ * from local fallback content. See useCmsDataSources() below.
  */
 import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
-import { apiFetch, fetchWithFallback } from "@/lib/api";
+import { apiFetch, fetchWithFallback, fetchWithSource } from "@/lib/api";
 import {
   BLOG_POSTS,
   BUSINESS_UNITS,
@@ -43,6 +47,8 @@ export interface CmsState {
 
 export type CollectionKey = Exclude<keyof CmsState, "settings">;
 
+export type DataSource = "live" | "placeholder";
+
 const INITIAL: CmsState = {
   heroSlides: HERO_SLIDES,
   businessUnits: BUSINESS_UNITS,
@@ -52,6 +58,17 @@ const INITIAL: CmsState = {
   jobPostings: JOB_POSTINGS,
   mediaLibrary: MEDIA_LIBRARY,
   settings: SITE_SETTINGS,
+};
+
+/** Before the first hydrate resolves, everything IS placeholder content. */
+const INITIAL_SOURCES: Record<CollectionKey, DataSource> = {
+  heroSlides: "placeholder",
+  businessUnits: "placeholder",
+  products: "placeholder",
+  teamMembers: "placeholder",
+  blogPosts: "placeholder",
+  jobPostings: "placeholder",
+  mediaLibrary: "placeholder",
 };
 
 /** Public read path + authenticated admin write path for each collection. */
@@ -68,6 +85,7 @@ const RESOURCE_PATHS: Record<CollectionKey, { public: string; admin: string }> =
 const SETTINGS_PATHS = { public: "/cms/settings", admin: "/admin/settings" };
 
 let state: CmsState = INITIAL;
+let dataSources: Record<CollectionKey, DataSource> = INITIAL_SOURCES;
 let hydrating = false;
 let hydrated = false;
 let revision = 0;
@@ -84,16 +102,34 @@ async function hydrate() {
   try {
     const [heroSlides, businessUnits, products, teamMembers, blogPosts, jobPostings, mediaLibrary, settings] =
       await Promise.all([
-        fetchWithFallback(RESOURCE_PATHS.heroSlides.public, INITIAL.heroSlides),
-        fetchWithFallback(RESOURCE_PATHS.businessUnits.public, INITIAL.businessUnits),
-        fetchWithFallback(RESOURCE_PATHS.products.public, INITIAL.products),
-        fetchWithFallback(RESOURCE_PATHS.teamMembers.public, INITIAL.teamMembers),
-        fetchWithFallback(RESOURCE_PATHS.blogPosts.public, INITIAL.blogPosts),
-        fetchWithFallback(RESOURCE_PATHS.jobPostings.public, INITIAL.jobPostings),
-        fetchWithFallback(RESOURCE_PATHS.mediaLibrary.public, INITIAL.mediaLibrary),
+        fetchWithSource(RESOURCE_PATHS.heroSlides.public, INITIAL.heroSlides),
+        fetchWithSource(RESOURCE_PATHS.businessUnits.public, INITIAL.businessUnits),
+        fetchWithSource(RESOURCE_PATHS.products.public, INITIAL.products),
+        fetchWithSource(RESOURCE_PATHS.teamMembers.public, INITIAL.teamMembers),
+        fetchWithSource(RESOURCE_PATHS.blogPosts.public, INITIAL.blogPosts),
+        fetchWithSource(RESOURCE_PATHS.jobPostings.public, INITIAL.jobPostings),
+        fetchWithSource(RESOURCE_PATHS.mediaLibrary.public, INITIAL.mediaLibrary),
         fetchWithFallback(SETTINGS_PATHS.public, INITIAL.settings),
       ]);
-    state = { heroSlides, businessUnits, products, teamMembers, blogPosts, jobPostings, mediaLibrary, settings };
+    state = {
+      heroSlides: heroSlides.data,
+      businessUnits: businessUnits.data,
+      products: products.data,
+      teamMembers: teamMembers.data,
+      blogPosts: blogPosts.data,
+      jobPostings: jobPostings.data,
+      mediaLibrary: mediaLibrary.data,
+      settings,
+    };
+    dataSources = {
+      heroSlides: heroSlides.isLive ? "live" : "placeholder",
+      businessUnits: businessUnits.isLive ? "live" : "placeholder",
+      products: products.isLive ? "live" : "placeholder",
+      teamMembers: teamMembers.isLive ? "live" : "placeholder",
+      blogPosts: blogPosts.isLive ? "live" : "placeholder",
+      jobPostings: jobPostings.isLive ? "live" : "placeholder",
+      mediaLibrary: mediaLibrary.isLive ? "live" : "placeholder",
+    };
   } finally {
     hydrated = true;
     hydrating = false;
@@ -120,12 +156,22 @@ export function useCollection<K extends CollectionKey>(key: K): CmsState[K] {
   return useCmsState()[key];
 }
 
+/**
+ * "live" once real backend data has loaded for a collection, "placeholder"
+ * if the backend was unreachable OR returned nothing for it yet. Use this to
+ * warn admins they're looking at fallback content, not saved content.
+ */
+export function useCmsDataSources(): Record<CollectionKey, DataSource> {
+  return useSyncExternalStore(subscribe, () => dataSources, () => INITIAL_SOURCES);
+}
+
 type Row = { id: string };
 
 /** Refetch a single collection from the public endpoint (used after a write). */
 async function refetch<K extends CollectionKey>(key: K) {
-  const fresh = await fetchWithFallback(RESOURCE_PATHS[key].public, state[key]);
-  state = { ...state, [key]: fresh } as CmsState;
+  const { data, isLive } = await fetchWithSource(RESOURCE_PATHS[key].public, state[key]);
+  state = { ...state, [key]: data } as CmsState;
+  dataSources = { ...dataSources, [key]: isLive ? "live" : "placeholder" };
   emit();
 }
 
@@ -170,6 +216,7 @@ export async function deleteItem(key: CollectionKey, id: string) {
 /** Merges a media asset already created via the /upload endpoint into local state. */
 export function addUploadedMedia(asset: MediaAsset) {
   state = { ...state, mediaLibrary: [asset, ...state.mediaLibrary] };
+  dataSources = { ...dataSources, mediaLibrary: "live" };
   emit();
 }
 

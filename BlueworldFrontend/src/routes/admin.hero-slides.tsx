@@ -1,3 +1,4 @@
+// hero-slides.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ResourceManager, type ColumnConfig, type FieldConfig } from "@/components/admin/resource-manager";
@@ -17,6 +18,21 @@ export const Route = createFileRoute("/admin/hero-slides")({
   component: HeroSlidesAdmin,
 });
 
+const CTA_DESTINATIONS = [
+  "/",
+  "/about/who-we-are",
+  "/about/vision-mission",
+  "/about/leadership",
+  "/business/vivon",
+  "/business/bluecrystal",
+  "/business/blow-right",
+  "/business/bluefragrance",
+  "/business/blueworld-cosmetics",
+  "/career",
+  "/blog",
+  "/contact",
+];
+
 const columns: ColumnConfig<HeroSlide>[] = [
   { key: "image", label: "Image", image: true },
   { key: "title", label: "Title" },
@@ -30,7 +46,12 @@ const fields: FieldConfig<HeroSlide>[] = [
   { name: "title", label: "Title" },
   { name: "subtitle", label: "Subtitle", type: "textarea", rows: 3 },
   { name: "ctaLabel", label: "CTA label" },
-  { name: "ctaHref", label: "CTA link", help: "Internal path, e.g. /business/vivon" },
+  {
+    name: "ctaHref",
+    label: "CTA link",
+    type: "select",
+    options: CTA_DESTINATIONS,
+  },
   { name: "order", label: "Order", type: "number" },
 ];
 

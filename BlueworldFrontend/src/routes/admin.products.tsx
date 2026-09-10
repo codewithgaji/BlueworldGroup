@@ -1,3 +1,4 @@
+// products.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ResourceManager, type ColumnConfig, type FieldConfig } from "@/components/admin/resource-manager";
@@ -17,6 +18,21 @@ export const Route = createFileRoute("/admin/products")({
   component: ProductsAdmin,
 });
 
+const PRODUCT_CATEGORIES = [
+  "Face serum",
+  "Cleanser",
+  "Body lotion",
+  "Body cream",
+  "Children wash",
+  "Baby balm",
+  "Antiseptic",
+  "Medicated soap",
+  "Relaxer",
+  "Styling",
+  "Eau de parfum",
+  "Essentials",
+];
+
 const columns: ColumnConfig<Product>[] = [
   { key: "image", label: "Image", image: true },
   { key: "name", label: "Name" },
@@ -34,7 +50,12 @@ const fields: FieldConfig<Product>[] = [
     options: ["vivon", "bluecrystal", "blow-right", "bluefragrance", "blueworld-cosmetics"],
   },
   { name: "subLine", label: "Vivon range", type: "select", options: ["face", "body", "children"] },
-  { name: "category", label: "Category" },
+  {
+    name: "category",
+    label: "Category",
+    type: "select",
+    options: PRODUCT_CATEGORIES,
+  },
   { name: "description", label: "Description", type: "textarea", rows: 3 },
   { name: "size", label: "Pack size" },
   { name: "image", label: "Image", type: "image" },
