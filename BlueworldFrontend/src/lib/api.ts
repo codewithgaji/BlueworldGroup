@@ -1,3 +1,6 @@
+import type { MediaAsset } from "@/lib/types";
+
+
 /**
  * Typed API client layer.
  *
@@ -35,6 +38,7 @@ export const ENDPOINTS = {
   authMe: "/auth/me",
   requestAccess: "/auth/request-access",
   accessRequests: "/auth/access-requests",
+  users: "/auth/users",
 } as const;
 
 /** Thrown when the backend actually responded but rejected the request. */
@@ -82,6 +86,33 @@ export async function apiFetch<T>(
     clearTimeout(timer);
   }
 }
+
+
+
+
+export async function uploadMedia(file: File): Promise<MediaAsset> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE_URL}/admin/media/upload`, {
+    method: "POST",
+    headers: { ...authHeader() }, // deliberately no content-type here
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let detail: unknown = null;
+    try {
+      detail = await res.json();
+    } catch {
+      // not JSON
+    }
+    throw new ApiError(res.status, detail, `API ${res.status} on /admin/media/upload`);
+  }
+  return (await res.json()) as MediaAsset;
+}
+
+
 
 /**
  * Read helper. Never throws — resolves to `fallback` when the backend is not

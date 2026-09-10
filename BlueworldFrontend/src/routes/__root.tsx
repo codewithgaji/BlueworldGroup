@@ -16,6 +16,10 @@ import { Toaster } from "../components/ui/sonner";
 import appCss from "../styles.css?url";
 import { reportError } from "../lib/error-reporting";
 
+import { HeroProvider, useHasHero } from "../components/site/hero-context";
+import { cn } from "../lib/utils";
+
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -132,23 +136,30 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  // The admin panel renders its own chrome (sidebar + topbar), so the public
-  // header/footer are hidden under /admin.
   const isAdmin = useRouterState({ select: (s) => s.location.pathname.startsWith("/admin") });
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col">
-        {!isAdmin && <SiteHeader />}
-        <div className="flex-1">
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </div>
-        {!isAdmin && <SiteFooter />}
-      </div>
+      <HeroProvider>
+        <AppShell isAdmin={isAdmin} />
+      </HeroProvider>
       <Toaster />
     </QueryClientProvider>
+  );
+}
+
+function AppShell({ isAdmin }: { isAdmin: boolean }) {
+  const hasHero = useHasHero();
+  return (
+    <div className="flex min-h-screen flex-col">
+      {!isAdmin && <SiteHeader />}
+      <div className={cn("flex-1", !isAdmin && !hasHero && "pt-20")}>
+        <Outlet />
+      </div>
+      {!isAdmin && <SiteFooter />}
+    </div>
   );
 }

@@ -18,29 +18,42 @@ export const Route = createFileRoute("/admin/business-units")({
 });
 
 const columns: ColumnConfig<BusinessUnit>[] = [
-  { key: "heroImage", label: "Image", image: true },
-  { key: "name", label: "Name" },
-  { key: "slug", label: "Slug" },
-  { key: "accent", label: "Accent" },
-  { key: "order", label: "Order" },
+  { key: "heroImage", label: "Cover Photo", image: true },
+  { key: "name", label: "Brand Name" },
+  { key: "accent", label: "Colour Theme" },
+  { key: "order", label: "Display Order" },
 ];
 
 const fields: FieldConfig<BusinessUnit>[] = [
-  { name: "name", label: "Name" },
-  { name: "slug", label: "Slug", help: "Used in the URL: /business/<slug>" },
-  { name: "tagline", label: "Tagline" },
-  { name: "summary", label: "Summary", type: "textarea", rows: 3 },
-  { name: "story", label: "Brand story", type: "textarea", rows: 8, help: "Separate paragraphs with a blank line." },
-  { name: "heroImage", label: "Hero image", type: "image" },
-  { name: "accent", label: "Accent colour", type: "select", options: ["blue", "orange"] },
-  { name: "order", label: "Order", type: "number" },
+  {
+    name: "slug",
+    label: "Which brand is this?",
+    type: "select",
+    options: ["vivon", "bluecrystal", "blow-right", "bluefragrance", "blueworld-cosmetics"],
+    help: "This is fixed to one of the five brands — it controls which page on the website this content appears on.",
+  },
+  { name: "name", label: "Brand Name (as shown on the page)" },
+  { name: "tagline", label: "Short slogan", help: "A one-line phrase shown under the brand name, e.g. 'Skincare that listens to your skin'." },
+  { name: "summary", label: "Short description", type: "textarea", rows: 3, help: "A brief overview shown on the homepage card for this brand." },
+  { name: "story", label: "Full brand story", type: "textarea", rows: 8, help: "The longer story shown on the brand's own page. Leave a blank line to start a new paragraph." },
+  {
+    name: "heroImage",
+    label: "Cover Photo",
+    type: "image",
+    help: "This is the ONE main photo for this brand — shown on the homepage and at the top of the brand's page. To show several product photos, add them as separate Products (see the Products tab) and tag them to this brand.",
+  },
+  { name: "accent", label: "Colour Theme", type: "select", options: ["blue", "orange"], help: "Which brand colour is used for highlights on this brand's page." },
+  { name: "order", label: "Display Order", type: "number", help: "Lower numbers appear first on the homepage. 1 shows before 2, and so on." },
 ];
 
 function BusinessUnitsAdmin() {
   const units = [...useCollection("businessUnits")].sort((a, b) => a.order - b.order);
 
   return (
-    <AdminShell title="Business Units" description="Each division shown under the Business menu.">
+    <AdminShell
+      title="Business Units"
+      description="Each division shown under the Business menu. Note: each brand has one cover photo here — individual product photos are managed separately under Products."
+    >
       <ResourceManager<BusinessUnit>
         items={units}
         columns={columns}
@@ -54,7 +67,7 @@ function BusinessUnitsAdmin() {
             tagline: "",
             summary: "",
             story: "",
-            heroImage: "unit.blueworld-cosmetics",
+            heroImage: "",
             accent: "blue",
             order: units.length + 1,
           }) as BusinessUnit

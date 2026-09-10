@@ -166,6 +166,13 @@ export async function deleteItem(key: CollectionKey, id: string) {
   }
 }
 
+
+/** Merges a media asset already created via the /upload endpoint into local state. */
+export function addUploadedMedia(asset: MediaAsset) {
+  state = { ...state, mediaLibrary: [asset, ...state.mediaLibrary] };
+  emit();
+}
+
 export async function updateSettings(settings: SiteSettings) {
   try {
     const updated = await apiFetch<SiteSettings>(SETTINGS_PATHS.admin, {

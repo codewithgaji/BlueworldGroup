@@ -26,10 +26,10 @@ const columns: ColumnConfig<TeamMember>[] = [
 
 const fields: FieldConfig<TeamMember>[] = [
   { name: "name", label: "Full name" },
-  { name: "role", label: "Role" },
-  { name: "bio", label: "Bio", type: "textarea", rows: 4 },
+  { name: "role", label: "Job title", help: "e.g. 'Chief Executive Officer', 'Head of Production'." },
+  { name: "bio", label: "Short bio", type: "textarea", rows: 4, help: "A few sentences about this person, shown on the Leadership page." },
   { name: "photo", label: "Photo", type: "image" },
-  { name: "order", label: "Order", type: "number" },
+  { name: "order", label: "Display order", type: "number", help: "Lower numbers appear first. 1 shows before 2, and so on." },
 ];
 
 function TeamAdmin() {

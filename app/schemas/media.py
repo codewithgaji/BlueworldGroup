@@ -11,3 +11,16 @@ class MediaAssetOut(CamelModel):
     width: int = 0
     height: int = 0
     used_on: str | None = None
+
+
+class MediaAssetUpdate(CamelModel):
+    filename: str | None = None
+    used_on: str | None = None
+
+
+class MediaAssetCreate(CamelModel):
+    url: str
+    filename: str | None = None
+    used_on: str | None = None
+    width: int = 0
+    height: int = 0

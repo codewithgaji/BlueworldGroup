@@ -17,6 +17,10 @@ import { useBlogPosts, useBusinessUnits, useHeroSlides, useProducts } from "@/ho
 import { ENDPOINTS, submitWithMock } from "@/lib/api";
 import { REACH_MARKERS } from "@/data/placeholder-content";
 
+
+
+
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -68,7 +72,7 @@ function HomePage() {
 
   return (
     <>
-      {slides.isLoading ? (
+            {slides.isLoading ? (
         <div className="h-[70vh] animate-pulse bg-primary-deep" />
       ) : (
         <HeroSlider slides={slides.data ?? []} />
@@ -101,15 +105,15 @@ function HomePage() {
         </div>
       </Section>
 
-      {/* Business units — compact teaser grid, Mafa-style. Full story lives on /business/[slug].
+            {/* Business units — Nuban-style: image carries the weight, no card chrome.
           Order: Vivon, BlueFragrance, BlueWorld Cosmetics, BlueCrystal, Blow Right. */}
-      <Section tone="muted">
+      <Section>
         <SectionHeading
           eyebrow="Our business"
           title="Five brands, built for different shelves"
           description="Each unit runs its own formulation brief, packaging language and route to market — sharing one factory floor and one quality standard."
         />
-        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-3 lg:gap-x-6">
           {units.isLoading && <LoadingBlock label="Loading business units…" />}
           {!units.isLoading && orderedUnits.length === 0 && (
             <EmptyBlock label="No business units published yet." />
@@ -117,30 +121,26 @@ function HomePage() {
           {orderedUnits.map((unit, i) => (
             <motion.div
               key={unit.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
               transition={{ duration: 0.45, delay: i * 0.05 }}
             >
-              <AppLink
-                href={`/business/${unit.slug}`}
-                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-1 hover:shadow-lift"
-              >
-                <div className="aspect-[16/10] overflow-hidden">
+              <AppLink href={`/business/${unit.slug}`} className="group block">
+                <div className="aspect-[4/5] overflow-hidden bg-secondary">
                   <CmsImage
                     src={unit.heroImage}
                     alt={unit.name}
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 </div>
-                <div className="flex flex-1 flex-col p-6">
-                  <p className="eyebrow">{unit.tagline}</p>
-                  <h3 className="mt-2 text-xl font-extrabold text-primary-deep">
+                <div className="mt-4 text-center">
+                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">
+                    {unit.tagline}
+                  </p>
+                  <h3 className="mt-1.5 font-display text-base font-bold text-primary-deep">
                     {unit.name}
                   </h3>
-                  <span className="mt-auto inline-flex items-center pt-5 text-sm font-bold text-accent">
-                    Explore {unit.name} →
-                  </span>
                 </div>
               </AppLink>
             </motion.div>

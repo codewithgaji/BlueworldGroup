@@ -1,97 +1,113 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AppLink } from "@/components/site/app-link";
+import { HeroFlag } from "@/components/site/hero-context";
 import { resolveImage } from "@/data/images";
 import type { HeroSlide } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { ButtonLink } from "@/components/site/primitives";
+
 
 export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
-  const [index, setIndex] = useState(0);
   const ordered = [...slides].sort((a, b) => a.order - b.order);
+  const pairCount = Math.max(1, Math.ceil(ordered.length / 2));
+  const [pairIndex, setPairIndex] = useState(0);
 
   useEffect(() => {
-    if (ordered.length < 2) return;
-    const t = setInterval(() => setIndex((i) => (i + 1) % ordered.length), 7000);
+    if (pairCount < 2) return;
+    const t = setInterval(() => setPairIndex((i) => (i + 1) % pairCount), 7000);
     return () => clearInterval(t);
-  }, [ordered.length]);
+  }, [pairCount]);
 
-  const slide = ordered[index];
-  if (!slide) return null;
+  if (ordered.length === 0) return null;
+
+  const left = ordered[(pairIndex * 2) % ordered.length]!;
+  const right = ordered[(pairIndex * 2 + 1) % ordered.length] ?? left;
+  const copy = left;
 
   return (
-    <section className="relative h-[86vh] min-h-[560px] w-full overflow-hidden bg-primary-deep">
-      <AnimatePresence mode="sync">
-        <motion.div
-          key={slide.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.1 }}
-          className="absolute inset-0"
-        >
-          {slide.videoUrl ? (
-            <video
-              src={slide.videoUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <img
-              src={resolveImage(slide.image)}
-              alt=""
-              className="ken-burns h-full w-full object-cover"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-deep/95 via-primary-deep/70 to-primary-deep/20" />
-        </motion.div>
-      </AnimatePresence>
+    <>
+      <HeroFlag />
+      <section className="relative h-[92vh] min-h-[560px] w-full overflow-hidden bg-primary-deep">
+        <div className="absolute inset-0 flex">
+          {/* Left image — the only one visible on mobile, exactly like Nuban */}
+          <div className="relative h-full w-full md:w-1/2">
+            <AnimatePresence mode="sync">
+              <motion.img
+                key={left.id}
+                src={resolveImage(left.image)}
+                alt=""
+                initial={{ opacity: 0, scale: 1.03 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </AnimatePresence>
+          </div>
 
-      <div className="relative mx-auto flex h-full max-w-7xl items-center px-5 lg:px-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`copy-${slide.id}`}
-            initial={{ opacity: 0, y: 26 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -14 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-2xl"
-          >
-            {slide.eyebrow && <p className="eyebrow">{slide.eyebrow}</p>}
-            <h1 className="mt-4 text-4xl font-extrabold leading-[1.03] text-primary-foreground sm:text-5xl lg:text-[4.1rem]">
-              {slide.title}
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-primary-foreground/85">
-              {slide.subtitle}
-            </p>
-            <AppLink
-              href={slide.ctaHref}
-              className="mt-9 inline-flex items-center rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-accent-foreground shadow-lift transition-transform hover:-translate-y-0.5"
-            >
-              {slide.ctaLabel}
-            </AppLink>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      <div className="absolute bottom-8 left-0 right-0">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 lg:px-8">
-          {ordered.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              aria-label={`Show slide ${i + 1}: ${s.title}`}
-              onClick={() => setIndex(i)}
-              className={cn(
-                "h-1.5 rounded-full transition-all",
-                i === index ? "w-14 bg-accent" : "w-7 bg-primary-foreground/35 hover:bg-primary-foreground/60",
-              )}
-            />
-          ))}
+          {/* Right image — desktop only */}
+          <div className="relative hidden h-full w-1/2 md:block">
+            <AnimatePresence mode="sync">
+              <motion.img
+                key={right.id}
+                src={resolveImage(right.image)}
+                alt=""
+                initial={{ opacity: 0, scale: 1.03 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
-    </section>
+
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-black/5 to-black/35" />
+
+        <div className="relative flex h-full items-center justify-center px-6 text-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`copy-${copy.id}`}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.6 }}
+              className="max-w-xl"
+            >
+              {copy.eyebrow && (
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/80">
+                  {copy.eyebrow}
+                </p>
+              )}
+              <h1 className="mt-4 text-3xl font-extrabold uppercase leading-tight tracking-wide text-white sm:text-4xl lg:text-5xl">
+                {copy.title}
+              </h1>
+              <div className="mt-8">
+                <ButtonLink href={copy.ctaHref} variant="outline">
+                  {copy.ctaLabel}
+                </ButtonLink>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {pairCount > 1 && (
+          <div className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+            {Array.from({ length: pairCount }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Show slide ${i + 1}`}
+                onClick={() => setPairIndex(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === pairIndex ? "w-8 bg-white" : "w-4 bg-white/40 hover:bg-white/70",
+                )}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </>
   );
 }

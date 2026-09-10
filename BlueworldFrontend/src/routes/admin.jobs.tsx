@@ -17,6 +17,16 @@ export const Route = createFileRoute("/admin/jobs")({
   component: JobsAdmin,
 });
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 80);
+}
+
 const columns: ColumnConfig<JobPosting>[] = [
   { key: "title", label: "Title" },
   { key: "department", label: "Department" },
@@ -27,7 +37,6 @@ const columns: ColumnConfig<JobPosting>[] = [
 
 const fields: FieldConfig<JobPosting>[] = [
   { name: "title", label: "Role title" },
-  { name: "slug", label: "Slug" },
   { name: "department", label: "Department" },
   { name: "location", label: "Location" },
   {
@@ -36,12 +45,14 @@ const fields: FieldConfig<JobPosting>[] = [
     type: "select",
     options: ["Full-time", "Contract", "Internship"],
   },
-  { name: "summary", label: "Summary", type: "textarea", rows: 3 },
-  { name: "responsibilities", label: "Responsibilities", type: "list", rows: 6, help: "One per line." },
-  { name: "requirements", label: "Requirements", type: "list", rows: 6, help: "One per line." },
-  { name: "postedAt", label: "Posted on", help: "YYYY-MM-DD" },
-  { name: "closesAt", label: "Closes on", help: "YYYY-MM-DD (optional)" },
+  { name: "summary", label: "Role summary", type: "textarea", rows: 3, help: "A short overview of the role, shown on the careers listing." },
+  { name: "responsibilities", label: "What they'll do", type: "list", rows: 6, help: "One responsibility per line." },
+  { name: "requirements", label: "What we're looking for", type: "list", rows: 6, help: "One requirement per line." },
+  { name: "postedAt", label: "Posted on", type: "date", help: "Pick the date this role should start showing on the careers page." },
+  { name: "closesAt", label: "Applications close on", type: "date", help: "Optional — leave blank if there's no deadline." },
 ];
+
+const DEFAULT_SLUG_PLACEHOLDER = "new-role";
 
 function JobsAdmin() {
   const jobs = [...useCollection("jobPostings")].sort((a, b) => b.postedAt.localeCompare(a.postedAt));
@@ -55,7 +66,7 @@ function JobsAdmin() {
         singular="Job"
         emptyItem={() => ({
           id: newId("j"),
-          slug: "new-role",
+          slug: DEFAULT_SLUG_PLACEHOLDER,
           title: "",
           department: "",
           location: "Ikeja, Lagos",
@@ -66,7 +77,11 @@ function JobsAdmin() {
           postedAt: new Date().toISOString().slice(0, 10),
           closesAt: null,
         })}
-        onSave={(item) => upsertItem("jobPostings", item)}
+        onSave={(item) => {
+          const needsSlug = !item.slug || item.slug === DEFAULT_SLUG_PLACEHOLDER;
+          const finalItem = needsSlug ? { ...item, slug: slugify(item.title) || newId("role") } : item;
+          upsertItem("jobPostings", finalItem);
+        }}
         onDelete={(id) => deleteItem("jobPostings", id)}
       />
     </AdminShell>

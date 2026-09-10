@@ -17,6 +17,16 @@ export const Route = createFileRoute("/admin/blog")({
   component: BlogAdmin,
 });
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 80);
+}
+
 const columns: ColumnConfig<BlogPost>[] = [
   { key: "coverImage", label: "Cover", image: true },
   { key: "title", label: "Title" },
@@ -26,16 +36,17 @@ const columns: ColumnConfig<BlogPost>[] = [
 ];
 
 const fields: FieldConfig<BlogPost>[] = [
-  { name: "title", label: "Title" },
-  { name: "slug", label: "Slug", help: "URL: /blog/<slug>" },
-  { name: "excerpt", label: "Excerpt", type: "textarea", rows: 3 },
-  { name: "body", label: "Body", type: "textarea", rows: 12, help: "Separate paragraphs with a blank line." },
+  { name: "title", label: "Article title" },
+  { name: "excerpt", label: "Short summary", type: "textarea", rows: 3, help: "A one- or two-sentence teaser shown on the blog listing page." },
+  { name: "body", label: "Full article", type: "textarea", rows: 12, help: "Leave a blank line between paragraphs to start a new one." },
   { name: "category", label: "Category" },
-  { name: "author", label: "Author" },
-  { name: "publishedAt", label: "Publish date", help: "YYYY-MM-DD" },
-  { name: "coverImage", label: "Cover image", type: "image" },
-  { name: "readingMinutes", label: "Reading minutes", type: "number" },
+  { name: "author", label: "Written by" },
+  { name: "publishedAt", label: "Publish date", type: "date", help: "Pick the date this article should go live." },
+  { name: "coverImage", label: "Cover photo", type: "image" },
+  { name: "readingMinutes", label: "Reading time (minutes)", type: "number" },
 ];
+
+const DEFAULT_SLUG_PLACEHOLDER = "new-post";
 
 function BlogAdmin() {
   const posts = [...useCollection("blogPosts")].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
@@ -49,17 +60,24 @@ function BlogAdmin() {
         singular="Post"
         emptyItem={() => ({
           id: newId("b"),
-          slug: "new-post",
+          slug: DEFAULT_SLUG_PLACEHOLDER,
           title: "",
           excerpt: "",
           body: "",
           category: "Company News",
           author: "",
           publishedAt: new Date().toISOString().slice(0, 10),
-          coverImage: "blog.ingredients",
+          coverImage: "",
           readingMinutes: 4,
         })}
-        onSave={(item) => upsertItem("blogPosts", item)}
+        onSave={(item) => {
+          // The web-address slug is generated automatically from the title —
+          // only regenerate it for a brand-new post, so editing an existing
+          // post's title never breaks a link someone already shared.
+          const needsSlug = !item.slug || item.slug === DEFAULT_SLUG_PLACEHOLDER;
+          const finalItem = needsSlug ? { ...item, slug: slugify(item.title) || newId("post") } : item;
+          upsertItem("blogPosts", finalItem);
+        }}
         onDelete={(id) => deleteItem("blogPosts", id)}
       />
     </AdminShell>

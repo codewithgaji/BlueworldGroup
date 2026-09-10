@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { resolveImage } from "@/data/images";
+import { AppLink } from "@/components/site/app-link";
 import { cn } from "@/lib/utils";
+import { ImageOff } from "lucide-react";
+
+
 
 export function Section({
   children,
@@ -69,7 +73,6 @@ export function SectionHeading({
     </motion.div>
   );
 }
-
 export function CmsImage({
   src,
   alt,
@@ -85,17 +88,60 @@ export function CmsImage({
   height?: number;
   eager?: boolean;
 }) {
+  const resolved = resolveImage(src);
+  if (!src || !resolved) {
+    return (
+      <div className={cn("flex items-center justify-center bg-secondary text-muted-foreground/40", className)}>
+        <ImageOff className="h-6 w-6" />
+      </div>
+    );
+  }
   return (
     <img
-      src={resolveImage(src)}
+      src={resolved}
       alt={alt}
       width={width}
       height={height}
       loading={eager ? "eager" : "lazy"}
       className={className}
+      onError={(e) => {
+        e.currentTarget.style.display = "none";
+        const parent = e.currentTarget.parentElement;
+        if (parent) parent.classList.add("bg-secondary");
+      }}
     />
   );
 }
+/**
+ * Solid, offset-shadow button — presses down on click, pops back up on
+ * release. This is the "feels clickable" 3D treatment, not a flat pill.
+ */
+export function ButtonLink({
+  href,
+  children,
+  variant = "solid",
+}: {
+  href: string;
+  children: ReactNode;
+  variant?: "solid" | "outline";
+}) {
+  return (
+    <AppLink
+      href={href}
+      className={cn(
+        "inline-flex items-center gap-2 border-2 px-6 py-2.5 text-xs font-bold uppercase tracking-[0.16em] transition-all",
+        "shadow-[4px_4px_0_0_rgba(0,0,0,0.9)] hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_rgba(0,0,0,0.9)]",
+        "active:translate-y-0.5 active:shadow-[1px_1px_0_0_rgba(0,0,0,0.9)]",
+        variant === "solid"
+          ? "border-black bg-accent text-accent-foreground hover:bg-primary-deep hover:text-primary-foreground"
+          : "border-white/80 bg-transparent text-white hover:bg-white hover:text-primary-deep",
+      )}
+    >
+      {children}
+    </AppLink>
+  );
+}
+
 
 export function PageHero({
   eyebrow,
@@ -111,11 +157,14 @@ export function PageHero({
   children?: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden surface-deep">
+    <section className="relative overflow-hidden bg-primary-deep">
       {image && (
         <div className="absolute inset-0">
-          <CmsImage src={image} alt="" className="h-full w-full object-cover opacity-25" eager />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-deep via-primary-deep/85 to-transparent" />
+          {/* Full-opacity, full-color photo — no blue tint, no dimming. */}
+          <CmsImage src={image} alt="" className="h-full w-full object-cover" eager />
+          {/* Neutral black scrim, only on the left where the text sits. */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
         </div>
       )}
       <div className="relative mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32">

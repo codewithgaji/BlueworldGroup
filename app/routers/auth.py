@@ -3,23 +3,20 @@ from sqlalchemy.orm import Session
 
 from core.deps import get_db, get_current_user, require_role
 from core.security import verify_password, hash_password, create_access_token, create_refresh_token, decode_token
+from core.limiter import limiter
 from core import config
 from models.admin_user import AdminUser, AdminRole, AdminStatus
 from schemas.auth import (
     LoginRequest, LoginResponse, AuthTokens, AdminUserOut,
     RefreshRequest, RequestAccessRequest, AccessDecision,
 )
-from fastapi import Request 
-from core.limiter import limiter 
-
-
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 EXPIRES_IN = config.ACCESS_TOKEN_EXPIRE_MINUTES * 60
 
 
 @router.post("/login", response_model=LoginResponse)
-@limiter.limit("10/minute")  # Limit to 10 login attempts per minute
+@limiter.limit("10/minute")
 def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(AdminUser).filter(AdminUser.email == payload.email).first()
     if not user or not verify_password(payload.password, user.hashed_password):
@@ -102,3 +99,64 @@ def decide_access_request(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.get("/users", response_model=list[AdminUserOut])
+def list_users(
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(require_role(AdminRole.admin)),
+):
+    """Everyone who has ever been approved or suspended — i.e. not still pending."""
+    return (
+        db.query(AdminUser)
+        .filter(AdminUser.status != AdminStatus.pending)
+        .order_by(AdminUser.created_at.desc())
+        .all()
+    )
+
+
+@router.post("/users/{user_id}/suspend", response_model=AdminUserOut)
+def suspend_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current: AdminUser = Depends(require_role(AdminRole.admin)),
+):
+    if str(current.id) == user_id:
+        raise HTTPException(400, "You cannot suspend your own account")
+    user = db.query(AdminUser).filter(AdminUser.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    user.status = AdminStatus.suspended
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.post("/users/{user_id}/reactivate", response_model=AdminUserOut)
+def reactivate_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(require_role(AdminRole.admin)),
+):
+    user = db.query(AdminUser).filter(AdminUser.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    user.status = AdminStatus.active
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current: AdminUser = Depends(require_role(AdminRole.admin)),
+):
+    if str(current.id) == user_id:
+        raise HTTPException(400, "You cannot delete your own account")
+    user = db.query(AdminUser).filter(AdminUser.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    db.delete(user)
+    db.commit()

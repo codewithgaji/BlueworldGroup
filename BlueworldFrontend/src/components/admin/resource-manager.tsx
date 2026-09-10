@@ -1,11 +1,13 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { CmsImage } from "@/components/site/primitives";
 import { LOCAL_IMAGES } from "@/data/images";
+import { useCollection } from "@/lib/cms-store";
 import { cn } from "@/lib/utils";
 
-export type FieldType = "text" | "textarea" | "number" | "select" | "image" | "boolean" | "list";
+export type FieldType = "text" | "textarea" | "number" | "select" | "multiselect" | "date" | "image" | "boolean" | "list";
 
 export interface FieldConfig<T> {
   name: keyof T & string;
@@ -33,6 +35,7 @@ export function ResourceManager<T extends Row>({
   onSave,
   onDelete,
   singular,
+  allowCreate = true,
 }: {
   items: T[];
   columns: ColumnConfig<T>[];
@@ -41,21 +44,25 @@ export function ResourceManager<T extends Row>({
   onSave: (item: T) => void;
   onDelete: (id: string) => void;
   singular: string;
+  /** Set false for resources created only through a dedicated flow (e.g. media uploads). */
+  allowCreate?: boolean;
 }) {
   const [editing, setEditing] = useState<T | null>(null);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={() => setEditing(emptyItem())}
-          className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-accent-foreground shadow-card transition-transform hover:-translate-y-0.5"
-        >
-          <Plus className="h-4 w-4" />
-          New {singular}
-        </button>
-      </div>
+      {allowCreate && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setEditing(emptyItem())}
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-accent-foreground shadow-card transition-transform hover:-translate-y-0.5"
+          >
+            <Plus className="h-4 w-4" />
+            New {singular}
+          </button>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
         <div className="overflow-x-auto">
@@ -150,6 +157,67 @@ export function ResourceManager<T extends Row>({
   );
 }
 
+/** Picks an image either from the uploaded Media Library, a bundled local asset, or a pasted URL. */
+function ImageField({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const media = useCollection("mediaLibrary");
+
+  return (
+    <div className="mt-2 space-y-2">
+      <div className="flex gap-3">
+        <select
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary"
+        >
+          <option value="">— choose an image —</option>
+          {media.length > 0 && (
+            <optgroup label="Uploaded (Media Library)">
+              {media.map((asset) => (
+                <option key={asset.id} value={asset.url}>
+                  {asset.filename || asset.url}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {Object.keys(LOCAL_IMAGES).length > 0 && (
+            <optgroup label="Bundled assets">
+              {Object.keys(LOCAL_IMAGES).map((key) => (
+                <option key={key} value={key}>
+                  {key}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+        {value && <CmsImage src={value} alt="" className="h-12 w-16 shrink-0 rounded-lg object-cover" />}
+      </div>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Or paste an image URL directly"
+        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs outline-none focus:border-primary"
+      />
+      <p className="text-xs text-muted-foreground">
+        Don't see the image you need?{" "}
+        <Link to="/admin/media" className="font-semibold text-primary-deep underline">
+          Upload it to the Media Library
+        </Link>{" "}
+        first, then pick it here.
+      </p>
+    </div>
+  );
+}
+
 export function RecordEditor<T extends Record<string, unknown>>({
   record,
   fields,
@@ -221,24 +289,37 @@ export function RecordEditor<T extends Record<string, unknown>>({
                 ))}
               </select>
             ) : field.type === "image" ? (
-              <div className="mt-2 flex gap-3">
-                <select
-                  id={id}
-                  value={String(value ?? "")}
-                  onChange={(e) => set(field.name, e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary"
-                >
-                  <option value="">—</option>
-                  {Object.keys(LOCAL_IMAGES).map((key) => (
-                    <option key={key} value={key}>
-                      {key}
-                    </option>
-                  ))}
-                </select>
-                {typeof value === "string" && value && (
-                  <CmsImage src={value} alt="" className="h-12 w-16 shrink-0 rounded-lg object-cover" />
-                )}
+              <ImageField id={id} value={String(value ?? "")} onChange={(v) => set(field.name, v)} />
+
+                        ) : field.type === "multiselect" ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(field.options ?? []).map((opt) => {
+                  const selected = String(value ?? "")
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                  const isOn = selected.includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => {
+                        const next = isOn ? selected.filter((s) => s !== opt) : [...selected, opt];
+                        set(field.name, next.join(", "));
+                      }}
+                      className={cn(
+                        "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
+                        isOn
+                          ? "border-transparent bg-primary-deep text-primary-foreground"
+                          : "border-border text-foreground/70 hover:bg-primary-soft",
+                      )}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
               </div>
+            
             ) : field.type === "boolean" ? (
               <div className="mt-2">
                 <button
@@ -255,6 +336,14 @@ export function RecordEditor<T extends Record<string, unknown>>({
                   {value ? "Yes" : "No"}
                 </button>
               </div>
+              ) : field.type === "date" ? (
+              <input
+                id={id}
+                type="date"
+                value={String(value ?? "")}
+                onChange={(e) => set(field.name, e.target.value)}
+                className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary"
+              />
             ) : (
               <input
                 id={id}
