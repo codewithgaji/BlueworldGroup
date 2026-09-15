@@ -174,3 +174,37 @@ export interface ApiListResponse<T> {
   items: T[];
   total: number;
 }
+
+
+export type BlockType =
+  | "prose" | "prose_image" | "card_grid" | "numbered_grid"
+  | "feature_pair" | "link_cards" | "team_grid" | "globe_reach";
+
+export interface PageBlock {
+  id: string;
+  type: BlockType;
+  tone: "default" | "muted";
+  order: number;
+  payload: Record<string, unknown>;
+}
+
+export interface CmsPage {
+  id: string;
+  slug: string;
+  title: string;
+  eyebrow?: string | null;
+  description?: string | null;
+  heroImage?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  status: "draft" | "published";
+  blocks: PageBlock[];
+}
+
+
+
+
+
+
+
+
