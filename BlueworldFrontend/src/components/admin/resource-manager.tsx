@@ -158,7 +158,7 @@ export function ResourceManager<T extends Row>({
 }
 
 /** Picks an image either from the uploaded Media Library, a bundled local asset, or a pasted URL. */
-function ImageField({
+export function ImageField({
   id,
   value,
   onChange,

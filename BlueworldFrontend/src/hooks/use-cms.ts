@@ -3,7 +3,7 @@
  * local placeholder dataset in `src/data/placeholder-content.ts`.
  */
 import { useQuery } from "@tanstack/react-query";
-import { ENDPOINTS, fetchWithFallback } from "@/lib/api";
+import { ENDPOINTS, fetchWithFallback, apiFetch } from "@/lib/api";
 import { useCmsRevision, useCmsState } from "@/lib/cms-store";
 import type {
   BlogPost,
@@ -15,6 +15,11 @@ import type {
   SiteSettings,
   TeamMember,
 } from "@/lib/types";
+import type { CmsPage } from "@/lib/types";
+
+
+
+
 
 const COMMON = { staleTime: 5 * 60_000, retry: 0 } as const;
 
@@ -110,5 +115,15 @@ export function useGlobeSettings() {
   return useQuery({
     queryKey: ["globe-settings"],
     queryFn: () => fetchWithFallback<GlobeSettings>("/cms/globe-settings", GLOBE_SETTINGS_DEFAULT),
+  });
+}
+
+
+
+export function usePage(slug: string) {
+  return useQuery({
+    queryKey: ["cms", "page", slug],
+    queryFn: () => apiFetch<CmsPage>(`${ENDPOINTS.pages}/${slug}`),
+    ...COMMON,
   });
 }

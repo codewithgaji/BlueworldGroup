@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core import config
-from routers import auth, cms_public, public_writes, admin_business_units, admin_media, admin_settings, admin_submissions
+from routers import auth, cms_public, public_writes, admin_business_units, admin_media, admin_settings, admin_submissions, pages
 from routers.admin_generic import make_admin_crud_router
 
 from models.hero_slide import HeroSlide
@@ -43,6 +43,8 @@ app.include_router(admin_business_units.router)
 app.include_router(admin_media.router)
 app.include_router(admin_settings.router)
 app.include_router(admin_submissions.router)
+app.include_router(pages.public_router)
+app.include_router(pages.admin_router)
 
 app.include_router(make_admin_crud_router("hero-slides", HeroSlide, HeroSlideOut, HeroSlideCreate))
 app.include_router(make_admin_crud_router("products", Product, ProductOut, ProductCreate))

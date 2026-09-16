@@ -51,3 +51,8 @@ def require_role(*allowed_roles: AdminRole):
         return user
 
     return _checker
+
+
+# Convenience alias: any admin-level content endpoint that editors should
+# also be able to use (not just full admins).
+require_editor = require_role(AdminRole.admin, AdminRole.editor)

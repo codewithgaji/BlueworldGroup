@@ -39,6 +39,8 @@ export const ENDPOINTS = {
   requestAccess: "/auth/request-access",
   accessRequests: "/auth/access-requests",
   users: "/auth/users",
+  pages: "/cms/pages",
+  adminPages: "/admin/pages",
 } as const;
 
 /** Thrown when the backend actually responded but rejected the request. */
