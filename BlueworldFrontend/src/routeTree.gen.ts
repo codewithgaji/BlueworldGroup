@@ -33,6 +33,7 @@ import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as AdminPagesPageIdRouteImport } from './routes/admin.pages.$pageId'
+import { Route as AdminPagesNewRouteImport } from './routes/admin.pages.new'
 import { Route as BusinessUnitIndexRouteImport } from './routes/business.$unit.index'
 import { Route as BusinessUnitLineRouteImport } from './routes/business.$unit.$line'
 
@@ -156,6 +157,11 @@ const AdminPagesPageIdRoute = AdminPagesPageIdRouteImport.update({
   path: '/$pageId',
   getParentRoute: () => AdminPagesRoute,
 } as any)
+const AdminPagesNewRoute = AdminPagesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminPagesRoute,
+} as any)
 const BusinessUnitIndexRoute = BusinessUnitIndexRouteImport.update({
   id: '/business/$unit/',
   path: '/business/$unit/',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/blog/': typeof BlogIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/admin/pages/$pageId': typeof AdminPagesPageIdRoute
+  '/admin/pages/new': typeof AdminPagesNewRoute
   '/business/$unit/$line': typeof BusinessUnitLineRoute
   '/business/$unit/': typeof BusinessUnitIndexRoute
 }
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogIndexRoute
   '/business': typeof BusinessIndexRoute
   '/admin/pages/$pageId': typeof AdminPagesPageIdRoute
+  '/admin/pages/new': typeof AdminPagesNewRoute
   '/business/$unit/$line': typeof BusinessUnitLineRoute
   '/business/$unit': typeof BusinessUnitIndexRoute
 }
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/blog/': typeof BlogIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/admin/pages/$pageId': typeof AdminPagesPageIdRoute
+  '/admin/pages/new': typeof AdminPagesNewRoute
   '/business/$unit/$line': typeof BusinessUnitLineRoute
   '/business/$unit/': typeof BusinessUnitIndexRoute
 }
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/business/'
     | '/admin/pages/$pageId'
+    | '/admin/pages/new'
     | '/business/$unit/$line'
     | '/business/$unit/'
   fileRoutesByTo: FileRoutesByTo
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/business'
     | '/admin/pages/$pageId'
+    | '/admin/pages/new'
     | '/business/$unit/$line'
     | '/business/$unit'
   id:
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/business/'
     | '/admin/pages/$pageId'
+    | '/admin/pages/new'
     | '/business/$unit/$line'
     | '/business/$unit/'
   fileRoutesById: FileRoutesById
@@ -537,6 +549,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPagesPageIdRouteImport
       parentRoute: typeof AdminPagesRoute
     }
+    '/admin/pages/new': {
+      id: '/admin/pages/new'
+      path: '/new'
+      fullPath: '/admin/pages/new'
+      preLoaderRoute: typeof AdminPagesNewRouteImport
+      parentRoute: typeof AdminPagesRoute
+    }
     '/business/$unit/': {
       id: '/business/$unit/'
       path: '/business/$unit'
@@ -556,10 +575,12 @@ declare module '@tanstack/react-router' {
 
 interface AdminPagesRouteChildren {
   AdminPagesPageIdRoute: typeof AdminPagesPageIdRoute
+  AdminPagesNewRoute: typeof AdminPagesNewRoute
 }
 
 const AdminPagesRouteChildren: AdminPagesRouteChildren = {
   AdminPagesPageIdRoute: AdminPagesPageIdRoute,
+  AdminPagesNewRoute: AdminPagesNewRoute,
 }
 
 const AdminPagesRouteWithChildren = AdminPagesRoute._addFileChildren(

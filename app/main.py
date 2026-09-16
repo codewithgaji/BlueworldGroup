@@ -17,6 +17,7 @@ from schemas.team_member import TeamMemberOut, TeamMemberCreate
 from schemas.blog_post import BlogPostOut, BlogPostCreate
 from schemas.job_posting import JobPostingOut, JobPostingCreate
 
+from routers import auth, cms_public, admin_pages
 
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -51,6 +52,10 @@ app.include_router(make_admin_crud_router("products", Product, ProductOut, Produ
 app.include_router(make_admin_crud_router("team", TeamMember, TeamMemberOut, TeamMemberCreate))
 app.include_router(make_admin_crud_router("blog-posts", BlogPost, BlogPostOut, BlogPostCreate))
 app.include_router(make_admin_crud_router("jobs", JobPosting, JobPostingOut, JobPostingCreate))
+
+app.include_router(admin_pages.router)
+app.include_router(admin_pages.public_router)
+
 
 
 @app.get("/health")

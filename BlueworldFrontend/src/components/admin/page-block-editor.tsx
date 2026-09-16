@@ -203,7 +203,6 @@ function FeatureItemsRepeater({
 }
 
 /* ---------- per-block-type field sets ---------- */
-
 function BlockFields({ block, onChange }: { block: PageBlockInput; onChange: (next: PageBlockInput) => void }) {
   const p = block.payload as P;
   const set = (patch: P) => onChange(setPayload(block, patch));
@@ -212,10 +211,10 @@ function BlockFields({ block, onChange }: { block: PageBlockInput; onChange: (ne
     case "prose":
       return (
         <div className="space-y-3">
-          <Field label="Small label (optional)"><TextInput value={p.eyebrow} onChange={(v) => set({ eyebrow: v })} /></Field>
-          <Field label="Heading (optional)"><TextInput value={p.heading} onChange={(v) => set({ heading: v })} /></Field>
+          <Field label="Small label (optional)"><TextInput value={p["eyebrow"]} onChange={(v) => set({ eyebrow: v })} /></Field>
+          <Field label="Heading (optional)"><TextInput value={p["heading"]} onChange={(v) => set({ heading: v })} /></Field>
           <Field label="Paragraphs" help="Leave a blank line between paragraphs.">
-            <ParagraphsInput value={p.paragraphs ?? []} onChange={(v) => set({ paragraphs: v })} />
+            <ParagraphsInput value={p["paragraphs"] ?? []} onChange={(v) => set({ paragraphs: v })} />
           </Field>
         </div>
       );
@@ -223,18 +222,18 @@ function BlockFields({ block, onChange }: { block: PageBlockInput; onChange: (ne
     case "prose_image":
       return (
         <div className="space-y-3">
-          <Field label="Small label (optional)"><TextInput value={p.eyebrow} onChange={(v) => set({ eyebrow: v })} /></Field>
-          <Field label="Heading"><TextInput value={p.heading} onChange={(v) => set({ heading: v })} /></Field>
-          <Field label="Short description (optional)"><TextInput value={p.description} onChange={(v) => set({ description: v })} /></Field>
+          <Field label="Small label (optional)"><TextInput value={p["eyebrow"]} onChange={(v) => set({ eyebrow: v })} /></Field>
+          <Field label="Heading"><TextInput value={p["heading"]} onChange={(v) => set({ heading: v })} /></Field>
+          <Field label="Short description (optional)"><TextInput value={p["description"]} onChange={(v) => set({ description: v })} /></Field>
           <Field label="Paragraphs" help="Leave a blank line between paragraphs.">
-            <ParagraphsInput value={p.paragraphs ?? []} onChange={(v) => set({ paragraphs: v })} />
+            <ParagraphsInput value={p["paragraphs"] ?? []} onChange={(v) => set({ paragraphs: v })} />
           </Field>
           <Field label="Photo">
-            <ImageField id={`img-${block.type}`} value={p.image ?? ""} onChange={(v) => set({ image: v })} />
+            <ImageField id={`img-${block.type}`} value={p["image"] ?? ""} onChange={(v) => set({ image: v })} />
           </Field>
-          <Field label="Photo description (for accessibility)"><TextInput value={p.imageAlt} onChange={(v) => set({ imageAlt: v })} /></Field>
+          <Field label="Photo description (for accessibility)"><TextInput value={p["imageAlt"]} onChange={(v) => set({ imageAlt: v })} /></Field>
           <Field label="Photo position">
-            <select value={p.imageSide ?? "left"} onChange={(e) => set({ imageSide: e.target.value })} className={inputClass}>
+            <select value={p["imageSide"] ?? "left"} onChange={(e) => set({ imageSide: e.target.value })} className={inputClass}>
               <option value="left">Photo on the left</option>
               <option value="right">Photo on the right</option>
             </select>
@@ -245,53 +244,53 @@ function BlockFields({ block, onChange }: { block: PageBlockInput; onChange: (ne
     case "card_grid":
       return (
         <div className="space-y-3">
-          <Field label="Small label (optional)"><TextInput value={p.eyebrow} onChange={(v) => set({ eyebrow: v })} /></Field>
-          <Field label="Heading (optional)"><TextInput value={p.heading} onChange={(v) => set({ heading: v })} /></Field>
+          <Field label="Small label (optional)"><TextInput value={p["eyebrow"]} onChange={(v) => set({ eyebrow: v })} /></Field>
+          <Field label="Heading (optional)"><TextInput value={p["heading"]} onChange={(v) => set({ heading: v })} /></Field>
           <Field label="Columns">
-            <select value={p.columns ?? 2} onChange={(e) => set({ columns: Number(e.target.value) })} className={inputClass}>
+            <select value={p["columns"] ?? 2} onChange={(e) => set({ columns: Number(e.target.value) })} className={inputClass}>
               <option value={2}>2 columns</option>
               <option value={3}>3 columns</option>
               <option value={4}>4 columns</option>
             </select>
           </Field>
-          <Field label="Cards"><CardsRepeater cards={p.cards ?? []} onChange={(v) => set({ cards: v })} /></Field>
+          <Field label="Cards"><CardsRepeater cards={p["cards"] ?? []} onChange={(v) => set({ cards: v })} /></Field>
         </div>
       );
 
     case "numbered_grid":
       return (
         <div className="space-y-3">
-          <Field label="Small label (optional)"><TextInput value={p.eyebrow} onChange={(v) => set({ eyebrow: v })} /></Field>
-          <Field label="Heading (optional)"><TextInput value={p.heading} onChange={(v) => set({ heading: v })} /></Field>
-          <Field label="Numbered items"><CardsRepeater cards={p.cards ?? []} onChange={(v) => set({ cards: v })} /></Field>
+          <Field label="Small label (optional)"><TextInput value={p["eyebrow"]} onChange={(v) => set({ eyebrow: v })} /></Field>
+          <Field label="Heading (optional)"><TextInput value={p["heading"]} onChange={(v) => set({ heading: v })} /></Field>
+          <Field label="Numbered items"><CardsRepeater cards={p["cards"] ?? []} onChange={(v) => set({ cards: v })} /></Field>
         </div>
       );
 
     case "feature_pair":
       return (
         <Field label="Features" help="Typically two side-by-side items, e.g. Vision and Mission.">
-          <FeatureItemsRepeater items={p.items ?? []} onChange={(v) => set({ items: v })} />
+          <FeatureItemsRepeater items={p["items"] ?? []} onChange={(v) => set({ items: v })} />
         </Field>
       );
 
     case "link_cards":
       return (
         <div className="space-y-3">
-          <Field label="Small label (optional)"><TextInput value={p.eyebrow} onChange={(v) => set({ eyebrow: v })} /></Field>
-          <Field label="Heading (optional)"><TextInput value={p.heading} onChange={(v) => set({ heading: v })} /></Field>
-          <Field label="Link cards"><LinkCardsRepeater cards={p.cards ?? []} onChange={(v) => set({ cards: v })} /></Field>
+          <Field label="Small label (optional)"><TextInput value={p["eyebrow"]} onChange={(v) => set({ eyebrow: v })} /></Field>
+          <Field label="Heading (optional)"><TextInput value={p["heading"]} onChange={(v) => set({ heading: v })} /></Field>
+          <Field label="Link cards"><LinkCardsRepeater cards={p["cards"] ?? []} onChange={(v) => set({ cards: v })} /></Field>
         </div>
       );
 
     case "team_grid":
       return (
         <div className="space-y-3">
-          <Field label="Small label (optional)"><TextInput value={p.eyebrow} onChange={(v) => set({ eyebrow: v })} /></Field>
-          <Field label="Heading (optional)"><TextInput value={p.heading} onChange={(v) => set({ heading: v })} /></Field>
+          <Field label="Small label (optional)"><TextInput value={p["eyebrow"]} onChange={(v) => set({ eyebrow: v })} /></Field>
+          <Field label="Heading (optional)"><TextInput value={p["heading"]} onChange={(v) => set({ heading: v })} /></Field>
           <Field label="Limit number of people shown (optional)" help="Leave blank to show everyone from the Team tab.">
             <input
               type="number"
-              value={p.limit ?? ""}
+              value={p["limit"] ?? ""}
               onChange={(e) => set({ limit: e.target.value === "" ? null : Number(e.target.value) })}
               className={inputClass}
             />
@@ -302,9 +301,9 @@ function BlockFields({ block, onChange }: { block: PageBlockInput; onChange: (ne
     case "globe_reach":
       return (
         <div className="space-y-3">
-          <Field label="Small label (optional)"><TextInput value={p.eyebrow} onChange={(v) => set({ eyebrow: v })} /></Field>
-          <Field label="Heading (optional)"><TextInput value={p.heading} onChange={(v) => set({ heading: v })} /></Field>
-          <Field label="Description (optional)"><TextInput value={p.description} onChange={(v) => set({ description: v })} /></Field>
+          <Field label="Small label (optional)"><TextInput value={p["eyebrow"]} onChange={(v) => set({ eyebrow: v })} /></Field>
+          <Field label="Heading (optional)"><TextInput value={p["heading"]} onChange={(v) => set({ heading: v })} /></Field>
+          <Field label="Description (optional)"><TextInput value={p["description"]} onChange={(v) => set({ description: v })} /></Field>
         </div>
       );
 

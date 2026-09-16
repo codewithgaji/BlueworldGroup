@@ -10,13 +10,15 @@ type P = Record<string, any>;
 
 /** Drops any key whose value is null/undefined, so optional props under
  *  exactOptionalPropertyTypes can be spread instead of passed as `undefined`. */
-function orNothing<T extends Record<string, unknown>>(obj: T): Partial<T> {
-  const out: Partial<T> = {};
+function orNothing<T extends Record<string, unknown>>(
+  obj: T,
+): { [K in keyof T]?: NonNullable<T[K]> } {
+  const out: Record<string, unknown> = {};
   for (const key in obj) {
     const value = obj[key];
     if (value !== null && value !== undefined) out[key] = value;
   }
-  return out;
+  return out as { [K in keyof T]?: NonNullable<T[K]> };
 }
 
 const GRID_COLS: Record<number, string> = {
