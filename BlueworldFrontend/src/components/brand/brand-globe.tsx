@@ -194,7 +194,7 @@ export function BrandGlobe({
   globeMarginBottom = 12,
   wordmarkCurve = "inward",
   wordmarkHug = 1,
-  wordmarkDepth= 70,
+  wordmarkDepth = 70,
   wordmarkGap = -70,
 }: BrandGlobeProps) {
   const wordmark = showMotto ?? showText;
@@ -268,7 +268,12 @@ export function BrandGlobe({
             >
               <path id="brand-globe-arc" d={wordmarkPath} fill="none" />
               <text fontSize="5.6" fontWeight="800" fill="#0f172a" letterSpacing="0.1">
-                <textPath href="#brand-globe-arc" startOffset="50%" textAnchor="middle" side="right">
+                <textPath
+                  href="#brand-globe-arc"
+                  startOffset="50%"
+                  textAnchor="middle"
+                  {...({ side: "right" } as React.SVGProps<SVGTextPathElement>)}
+                >
                   GOD IS OUR STRENGTH
                 </textPath>
               </text>

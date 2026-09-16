@@ -98,7 +98,6 @@ function Marker({ marker, radius }: { marker: GlobeMarker; radius: number }) {
             setHovered(true);
           }}
           onPointerOut={() => setHovered(false)}
-          title={marker.note}
         >
           <circleGeometry args={[radius * 0.035, 24]} />
           <meshBasicMaterial color={hovered ? "#ffffff" : ACCENT} />

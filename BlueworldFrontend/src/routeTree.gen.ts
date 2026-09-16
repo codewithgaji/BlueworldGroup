@@ -24,6 +24,7 @@ import { Route as AdminHeroSlidesRouteImport } from './routes/admin.hero-slides'
 import { Route as AdminJobsRouteImport } from './routes/admin.jobs'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminMediaRouteImport } from './routes/admin.media'
+import { Route as AdminPagesRouteImport } from './routes/admin.pages'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminRequestAccessRouteImport } from './routes/admin.request-access'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -109,6 +110,11 @@ const AdminMediaRoute = AdminMediaRouteImport.update({
   path: '/admin/media',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPagesRoute = AdminPagesRouteImport.update({
+  id: '/admin/pages',
+  path: '/admin/pages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/admin/products',
   path: '/admin/products',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/admin/jobs': typeof AdminJobsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/pages': typeof AdminPagesRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/request-access': typeof AdminRequestAccessRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/admin/jobs': typeof AdminJobsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/pages': typeof AdminPagesRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/request-access': typeof AdminRequestAccessRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/admin/jobs': typeof AdminJobsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/pages': typeof AdminPagesRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/request-access': typeof AdminRequestAccessRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin/jobs'
     | '/admin/login'
     | '/admin/media'
+    | '/admin/pages'
     | '/admin/products'
     | '/admin/request-access'
     | '/admin/settings'
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/admin/jobs'
     | '/admin/login'
     | '/admin/media'
+    | '/admin/pages'
     | '/admin/products'
     | '/admin/request-access'
     | '/admin/settings'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
     | '/admin/jobs'
     | '/admin/login'
     | '/admin/media'
+    | '/admin/pages'
     | '/admin/products'
     | '/admin/request-access'
     | '/admin/settings'
@@ -329,6 +341,7 @@ export interface RootRouteChildren {
   AdminJobsRoute: typeof AdminJobsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMediaRoute: typeof AdminMediaRoute
+  AdminPagesRoute: typeof AdminPagesRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminRequestAccessRoute: typeof AdminRequestAccessRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -449,6 +462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/pages': {
+      id: '/admin/pages'
+      path: '/admin/pages'
+      fullPath: '/admin/pages'
+      preLoaderRoute: typeof AdminPagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/products': {
       id: '/admin/products'
       path: '/admin/products'
@@ -529,6 +549,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminJobsRoute: AdminJobsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMediaRoute: AdminMediaRoute,
+  AdminPagesRoute: AdminPagesRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminRequestAccessRoute: AdminRequestAccessRoute,
   AdminSettingsRoute: AdminSettingsRoute,

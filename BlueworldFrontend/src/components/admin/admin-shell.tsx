@@ -15,6 +15,7 @@ import {
   Briefcase,
   UserCheck,
   X,
+  FileText,
 } from "lucide-react";
 import { getAdminUser, logout, useAdminUser } from "@/hooks/use-admin-auth";
 import { BrandGlobe } from "@/components/brand/brand-globe";
@@ -25,6 +26,7 @@ export const ADMIN_NAV = [
   { label: "Dashboard", to: "/admin", icon: LayoutDashboard },
   { label: "Hero Slides", to: "/admin/hero-slides", icon: Sparkles },
   { label: "Business Units", to: "/admin/business-units", icon: Layers },
+  { label: "About Pages", to: "/admin/pages", icon: FileText },
   { label: "Products", to: "/admin/products", icon: Package },
   { label: "Team", to: "/admin/team", icon: Users },
   { label: "Blog Posts", to: "/admin/blog", icon: Newspaper },

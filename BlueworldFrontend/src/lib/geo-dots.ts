@@ -24,8 +24,11 @@ interface GeoJson {
 function pointInRing(lng: number, lat: number, ring: Ring): boolean {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, yi] = ring[i];
-    const [xj, yj] = ring[j];
+    const pi = ring[i];
+    const pj = ring[j];
+    if (!pi || !pj) continue; // out-of-bounds can't happen given the loop bounds, but satisfies noUncheckedIndexedAccess
+    const [xi, yi] = pi;
+    const [xj, yj] = pj;
     const intersects =
       yi > lat !== yj > lat &&
       lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
@@ -35,8 +38,9 @@ function pointInRing(lng: number, lat: number, ring: Ring): boolean {
 }
 
 function pointInPolygonCoords(lng: number, lat: number, rings: Ring[]): boolean {
-  if (rings.length === 0) return false;
-  return pointInRing(lng, lat, rings[0]);
+  const outerRing = rings[0];
+  if (!outerRing) return false;
+  return pointInRing(lng, lat, outerRing);
 }
 
 function pointInFeature(lng: number, lat: number, geometry: Geometry): boolean {
