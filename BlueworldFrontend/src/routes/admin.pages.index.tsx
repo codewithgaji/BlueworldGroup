@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { deleteAdminPage, listAdminPages } from "@/lib/pages-admin";
 
-export const Route = createFileRoute("/admin/pages")({
+export const Route = createFileRoute("/admin/pages/")({
   component: AdminPagesList,
 });
 

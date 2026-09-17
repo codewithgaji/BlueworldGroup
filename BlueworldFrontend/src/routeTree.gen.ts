@@ -24,7 +24,6 @@ import { Route as AdminHeroSlidesRouteImport } from './routes/admin.hero-slides'
 import { Route as AdminJobsRouteImport } from './routes/admin.jobs'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminMediaRouteImport } from './routes/admin.media'
-import { Route as AdminPagesRouteImport } from './routes/admin.pages'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminRequestAccessRouteImport } from './routes/admin.request-access'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -32,6 +31,7 @@ import { Route as AdminTeamRouteImport } from './routes/admin.team'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
+import { Route as AdminPagesIndexRouteImport } from './routes/admin.pages.index'
 import { Route as AdminPagesPageIdRouteImport } from './routes/admin.pages.$pageId'
 import { Route as AdminPagesNewRouteImport } from './routes/admin.pages.new'
 import { Route as BusinessUnitIndexRouteImport } from './routes/business.$unit.index'
@@ -112,11 +112,6 @@ const AdminMediaRoute = AdminMediaRouteImport.update({
   path: '/admin/media',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminPagesRoute = AdminPagesRouteImport.update({
-  id: '/admin/pages',
-  path: '/admin/pages',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/admin/products',
   path: '/admin/products',
@@ -152,15 +147,20 @@ const BusinessIndexRoute = BusinessIndexRouteImport.update({
   path: '/business/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPagesIndexRoute = AdminPagesIndexRouteImport.update({
+  id: '/admin/pages/',
+  path: '/admin/pages/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPagesPageIdRoute = AdminPagesPageIdRouteImport.update({
-  id: '/$pageId',
-  path: '/$pageId',
-  getParentRoute: () => AdminPagesRoute,
+  id: '/admin/pages/$pageId',
+  path: '/admin/pages/$pageId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPagesNewRoute = AdminPagesNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => AdminPagesRoute,
+  id: '/admin/pages/new',
+  path: '/admin/pages/new',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BusinessUnitIndexRoute = BusinessUnitIndexRouteImport.update({
   id: '/business/$unit/',
@@ -187,7 +187,6 @@ export interface FileRoutesByFullPath {
   '/admin/jobs': typeof AdminJobsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
-  '/admin/pages': typeof AdminPagesRouteWithChildren
   '/admin/products': typeof AdminProductsRoute
   '/admin/request-access': typeof AdminRequestAccessRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -200,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/admin/pages/$pageId': typeof AdminPagesPageIdRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/business/$unit/$line': typeof BusinessUnitLineRoute
+  '/admin/pages/': typeof AdminPagesIndexRoute
   '/business/$unit/': typeof BusinessUnitIndexRoute
 }
 export interface FileRoutesByTo {
@@ -216,7 +216,6 @@ export interface FileRoutesByTo {
   '/admin/jobs': typeof AdminJobsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
-  '/admin/pages': typeof AdminPagesRouteWithChildren
   '/admin/products': typeof AdminProductsRoute
   '/admin/request-access': typeof AdminRequestAccessRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -229,6 +228,7 @@ export interface FileRoutesByTo {
   '/admin/pages/$pageId': typeof AdminPagesPageIdRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/business/$unit/$line': typeof BusinessUnitLineRoute
+  '/admin/pages': typeof AdminPagesIndexRoute
   '/business/$unit': typeof BusinessUnitIndexRoute
 }
 export interface FileRoutesById {
@@ -246,7 +246,6 @@ export interface FileRoutesById {
   '/admin/jobs': typeof AdminJobsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
-  '/admin/pages': typeof AdminPagesRouteWithChildren
   '/admin/products': typeof AdminProductsRoute
   '/admin/request-access': typeof AdminRequestAccessRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -259,6 +258,7 @@ export interface FileRoutesById {
   '/admin/pages/$pageId': typeof AdminPagesPageIdRoute
   '/admin/pages/new': typeof AdminPagesNewRoute
   '/business/$unit/$line': typeof BusinessUnitLineRoute
+  '/admin/pages/': typeof AdminPagesIndexRoute
   '/business/$unit/': typeof BusinessUnitIndexRoute
 }
 export interface FileRouteTypes {
@@ -277,7 +277,6 @@ export interface FileRouteTypes {
     | '/admin/jobs'
     | '/admin/login'
     | '/admin/media'
-    | '/admin/pages'
     | '/admin/products'
     | '/admin/request-access'
     | '/admin/settings'
@@ -290,6 +289,7 @@ export interface FileRouteTypes {
     | '/admin/pages/$pageId'
     | '/admin/pages/new'
     | '/business/$unit/$line'
+    | '/admin/pages/'
     | '/business/$unit/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -306,7 +306,6 @@ export interface FileRouteTypes {
     | '/admin/jobs'
     | '/admin/login'
     | '/admin/media'
-    | '/admin/pages'
     | '/admin/products'
     | '/admin/request-access'
     | '/admin/settings'
@@ -319,6 +318,7 @@ export interface FileRouteTypes {
     | '/admin/pages/$pageId'
     | '/admin/pages/new'
     | '/business/$unit/$line'
+    | '/admin/pages'
     | '/business/$unit'
   id:
     | '__root__'
@@ -335,7 +335,6 @@ export interface FileRouteTypes {
     | '/admin/jobs'
     | '/admin/login'
     | '/admin/media'
-    | '/admin/pages'
     | '/admin/products'
     | '/admin/request-access'
     | '/admin/settings'
@@ -348,6 +347,7 @@ export interface FileRouteTypes {
     | '/admin/pages/$pageId'
     | '/admin/pages/new'
     | '/business/$unit/$line'
+    | '/admin/pages/'
     | '/business/$unit/'
   fileRoutesById: FileRoutesById
 }
@@ -365,7 +365,6 @@ export interface RootRouteChildren {
   AdminJobsRoute: typeof AdminJobsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMediaRoute: typeof AdminMediaRoute
-  AdminPagesRoute: typeof AdminPagesRouteWithChildren
   AdminProductsRoute: typeof AdminProductsRoute
   AdminRequestAccessRoute: typeof AdminRequestAccessRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -375,7 +374,10 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
+  AdminPagesPageIdRoute: typeof AdminPagesPageIdRoute
+  AdminPagesNewRoute: typeof AdminPagesNewRoute
   BusinessUnitLineRoute: typeof BusinessUnitLineRoute
+  AdminPagesIndexRoute: typeof AdminPagesIndexRoute
   BusinessUnitIndexRoute: typeof BusinessUnitIndexRoute
 }
 
@@ -486,13 +488,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/pages': {
-      id: '/admin/pages'
-      path: '/admin/pages'
-      fullPath: '/admin/pages'
-      preLoaderRoute: typeof AdminPagesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/products': {
       id: '/admin/products'
       path: '/admin/products'
@@ -542,19 +537,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/pages/': {
+      id: '/admin/pages/'
+      path: '/admin/pages'
+      fullPath: '/admin/pages/'
+      preLoaderRoute: typeof AdminPagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/pages/$pageId': {
       id: '/admin/pages/$pageId'
-      path: '/$pageId'
+      path: '/admin/pages/$pageId'
       fullPath: '/admin/pages/$pageId'
       preLoaderRoute: typeof AdminPagesPageIdRouteImport
-      parentRoute: typeof AdminPagesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/pages/new': {
       id: '/admin/pages/new'
-      path: '/new'
+      path: '/admin/pages/new'
       fullPath: '/admin/pages/new'
       preLoaderRoute: typeof AdminPagesNewRouteImport
-      parentRoute: typeof AdminPagesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/business/$unit/': {
       id: '/business/$unit/'
@@ -573,20 +575,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdminPagesRouteChildren {
-  AdminPagesPageIdRoute: typeof AdminPagesPageIdRoute
-  AdminPagesNewRoute: typeof AdminPagesNewRoute
-}
-
-const AdminPagesRouteChildren: AdminPagesRouteChildren = {
-  AdminPagesPageIdRoute: AdminPagesPageIdRoute,
-  AdminPagesNewRoute: AdminPagesNewRoute,
-}
-
-const AdminPagesRouteWithChildren = AdminPagesRoute._addFileChildren(
-  AdminPagesRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CareerRoute: CareerRoute,
@@ -601,7 +589,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminJobsRoute: AdminJobsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMediaRoute: AdminMediaRoute,
-  AdminPagesRoute: AdminPagesRouteWithChildren,
   AdminProductsRoute: AdminProductsRoute,
   AdminRequestAccessRoute: AdminRequestAccessRoute,
   AdminSettingsRoute: AdminSettingsRoute,
@@ -611,7 +598,10 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   BusinessIndexRoute: BusinessIndexRoute,
+  AdminPagesPageIdRoute: AdminPagesPageIdRoute,
+  AdminPagesNewRoute: AdminPagesNewRoute,
   BusinessUnitLineRoute: BusinessUnitLineRoute,
+  AdminPagesIndexRoute: AdminPagesIndexRoute,
   BusinessUnitIndexRoute: BusinessUnitIndexRoute,
 }
 export const routeTree = rootRouteImport

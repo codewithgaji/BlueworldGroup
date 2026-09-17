@@ -1,24 +1,42 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Globe as GlobeIcon, Image as ImageIcon } from "lucide-react";
 import type { GlobeMarker } from "@/components/brand/globe-scene";
-import { geoJsonToDots, type LatLng } from "@/lib/geo-dots";
 
 // react-three-fiber/three touch WebGL/window at import time, so the scene
 // must only ever load client-side. React.lazy + <Suspense> keeps it inside
 // the existing tree (no second root) and skips it entirely during SSR.
 const GlobeScene = lazy(() => import("@/components/brand/globe-scene"));
 
+/**
+ * Background presets for the square behind the globe — pick one via
+ * `background`, or pass a custom CSS gradient/color string directly.
+ * "midnight" is the default: a near-black navy that lets the Earth texture,
+ * atmosphere glow and accent-orange markers/wordmark do the contrast work,
+ * instead of competing with a bright brand-orange square behind them.
+ */
+export const GLOBE_BACKGROUNDS = {
+  none: "transparent",
+  midnight: "linear-gradient(160deg, #0b1220 0%, #0d1526 55%, #0a0f1c 100%)",
+  deepBlue: "linear-gradient(160deg, #0c1e3d 0%, #0a1730 55%, #060d1c 100%)",
+  slate: "linear-gradient(160deg, #1c2531 0%, #171e28 55%, #10151d 100%)",
+  charcoal: "linear-gradient(160deg, #17181c 0%, #131418 55%, #0c0d10 100%)",
+} as const;
+
+export type GlobeBackground = keyof typeof GLOBE_BACKGROUNDS;
+
 interface BrandGlobeProps {
   /** Fixed pixel square — for tight, non-growing spots like the navbar. Overrides maxWidthClass entirely. */
   size?: number;
   /**
    * Tailwind max-width class for the responsive (non-`size`) square, e.g. "max-w-sm",
-   * "max-w-md", "max-w-xl". This is the knob for "make the whole orange box smaller" —
+   * "max-w-md", "max-w-xl". This is the knob for "make the whole square smaller" —
    * separate from `className` so you don't have to also remember to keep `mx-auto`.
    */
   maxWidthClass?: string;
   /** Extra classes for the outer square — merged alongside maxWidthClass, not replacing it. */
   className?: string;
+  /** Named preset from GLOBE_BACKGROUNDS, or any raw CSS `background` value. Defaults to "midnight". */
+  background?: GlobeBackground | (string & {});
   markers?: GlobeMarker[];
   /** Which view shows first. Defaults to the animated globe. */
   mode?: "animated" | "static";
@@ -65,34 +83,6 @@ interface BrandGlobeProps {
    * away from the globe, toward the bottom of the square.
    */
   wordmarkGap?: number;
-}
-
-let cachedDots: LatLng[] | null = null;
-
-function useWorldDots(enabled: boolean) {
-  const [dots, setDots] = useState<LatLng[]>(cachedDots ?? []);
-
-  useEffect(() => {
-    if (!enabled || cachedDots) return;
-    let cancelled = false;
-
-    fetch("/data/world-countries.geojson")
-      .then((r) => r.json())
-      .then((geo) => {
-        const computed = geoJsonToDots(geo);
-        cachedDots = computed;
-        if (!cancelled) setDots(computed);
-      })
-      .catch((err) => {
-        console.error("[BrandGlobe] failed to load world-countries.geojson", err);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [enabled]);
-
-  return dots;
 }
 
 /**
@@ -182,6 +172,7 @@ export function BrandGlobe({
   size,
   maxWidthClass = "max-w-xl",
   className,
+  background = "none",
   markers = [],
   mode = "animated",
   showText = true,
@@ -189,9 +180,9 @@ export function BrandGlobe({
   interactive = true,
   showToggle = true,
   standText = "Five Nigerian-made brands, trusted in homes across four countries and counting.",
-  globeMarginX = 20,
-  globeMarginTop = 8,
-  globeMarginBottom = 12,
+  globeMarginX = 10,
+  globeMarginTop = 4,
+  globeMarginBottom = 6,
   wordmarkCurve = "inward",
   wordmarkHug = 1,
   wordmarkDepth = 70,
@@ -199,8 +190,10 @@ export function BrandGlobe({
 }: BrandGlobeProps) {
   const wordmark = showMotto ?? showText;
   const [view, setView] = useState<"animated" | "static">(interactive ? mode : "static");
-  const dots = useWorldDots(interactive && view === "animated");
   const canToggle = interactive && showToggle;
+
+  const backgroundCss =
+    background in GLOBE_BACKGROUNDS ? GLOBE_BACKGROUNDS[background as GlobeBackground] : background;
 
   const outerStyle = size ? { width: size, height: size } : undefined;
   const outerClassName = size
@@ -221,7 +214,7 @@ export function BrandGlobe({
       className={outerClassName}
       style={{
         ...outerStyle,
-        background: "linear-gradient(160deg, #F5A623 0%, #EE8A1E 55%, #DD7412 100%)",
+        background: backgroundCss,
       }}
     >
       {view === "static" || !interactive ? (
@@ -245,9 +238,9 @@ export function BrandGlobe({
             }}
           >
             <Suspense
-              fallback={<div className="h-full w-full animate-pulse rounded-full bg-white/15" />}
+              fallback={<div className="h-full w-full animate-pulse rounded-full bg-white/10" />}
             >
-              <GlobeScene dots={dots} markers={markers} interactive />
+              <GlobeScene markers={markers} interactive />
             </Suspense>
           </div>
 
@@ -267,7 +260,7 @@ export function BrandGlobe({
               preserveAspectRatio="none"
             >
               <path id="brand-globe-arc" d={wordmarkPath} fill="none" />
-              <text fontSize="5.6" fontWeight="800" fill="#0f172a" letterSpacing="0.1">
+              <text fontSize="5.6" fontWeight="800" fill="var(--color-foreground)"letterSpacing="0.1">
                 <textPath
                   href="#brand-globe-arc"
                   startOffset="50%"
