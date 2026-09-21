@@ -5,6 +5,7 @@ from schemas.base import CamelModel
 
 class HeroSlideBase(CamelModel):
     image: str
+    mobile_image: str | None = None
     video_url: str | None = None
     eyebrow: str | None = None
     title: str

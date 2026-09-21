@@ -5,30 +5,34 @@ function Word({
   children,
   progress,
   range,
+  className,
 }: {
   children: string;
   progress: MotionValue<number>;
   range: [number, number];
+  className?: string;
 }) {
   const color = useTransform(progress, range, ["hsl(var(--muted-foreground))", "hsl(var(--accent))"]);
   return (
-    <motion.span style={{ color }} className="inline">
+    <motion.span style={{ color }} className={cn("inline", className)}>
       {children}{" "}
     </motion.span>
   );
 }
 
-export function ScrollRevealText({ text }: { text: string }) {
+import { cn } from "@/lib/utils";
+
+export function ScrollRevealText({ text, className }: { text: string; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.9", "start 0.25"] });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.9", "start 0.35"] });
   const words = text.split(" ");
 
   return (
-    <div ref={ref} className="mx-auto max-w-4xl overflow-hidden px-6 py-32 text-center">
-      <p className="font-display text-2xl font-bold leading-snug sm:text-3xl lg:text-4xl">
-        {words.map((word, i) => (
+    <div ref={ref} className="overflow-hidden">
+      <p className={cn("font-display font-extrabold leading-none", className)}>
+        {words.map((w, i) => (
           <Word key={i} progress={scrollYProgress} range={[i / words.length, (i + 1) / words.length]}>
-            {word}
+            {w}
           </Word>
         ))}
       </p>

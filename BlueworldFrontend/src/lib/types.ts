@@ -18,6 +18,7 @@ export interface HeroSlide {
   ctaLabel: string;
   ctaHref: string;
   order: number;
+  mobileImage?: string | null;
 }
 
 export type BusinessUnitSlug =

@@ -16,10 +16,8 @@ import { ProductCard } from "@/components/site/product-card";
 import { useBlogPosts, useBusinessUnits, useHeroSlides, useProducts } from "@/hooks/use-cms";
 import { ENDPOINTS, submitWithMock } from "@/lib/api";
 import { REACH_MARKERS } from "@/data/placeholder-content";
-
-
-
-
+import { HeroFlag } from "@/components/site/hero-context";
+import { ScrollRevealText } from "@/components/site/scroll-reveal-text";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -40,8 +38,6 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-// Fixed display order for the homepage teaser grid, independent of API/dummy data order.
-// Any slug not listed here falls to the end, so new units never disappear silently.
 const BUSINESS_UNIT_DISPLAY_ORDER = [
   "vivon",
   "bluefragrance",
@@ -60,6 +56,15 @@ function orderBusinessUnits<T extends { slug: string }>(units: T[]): T[] {
   });
 }
 
+const TRUST_MARKERS = [
+  { k: "1998", v: "Founded in Lagos" },
+  { k: "500+", v: "People employed" },
+  { k: "5", v: "Brands in the house" },
+  { k: "120+", v: "SKUs in production" },
+  { k: "4", v: "Countries reached" },
+  { k: "11", v: "QC checks per batch" },
+];
+
 function HomePage() {
   const slides = useHeroSlides();
   const units = useBusinessUnits();
@@ -72,41 +77,50 @@ function HomePage() {
 
   return (
     <>
-            {slides.isLoading ? (
+      <HeroFlag />
+      {slides.isLoading ? (
         <div className="h-[70vh] animate-pulse bg-primary-deep" />
       ) : (
         <HeroSlider slides={slides.data ?? []} />
       )}
 
-      {/* Globe section */}
-      <Section>
+      {/* Trust bar — sits right under the hero, gives the page immediate
+          substance instead of dropping straight into a big empty gap. */}
+      <div className="border-b border-border bg-primary-deep py-8">
+        <div className="mx-auto grid max-w-7xl grid-cols-3 gap-6 px-5 sm:grid-cols-6 lg:px-8">
+          {TRUST_MARKERS.map((s) => (
+            <div key={s.k} className="text-center">
+              <p className="font-display text-2xl font-extrabold text-accent sm:text-3xl">{s.k}</p>
+              <p className="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-primary-foreground/70 sm:text-xs">
+                {s.v}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Globe section — a quieter statement keeps the content in focus. */}
+      <Section tone="muted" className="py-16 lg:py-24">
+        <div className="mb-12 flex items-center justify-center gap-4 sm:mb-16">
+          <span className="h-px w-10 bg-accent sm:w-16" />
+          <ScrollRevealText
+            text="God Is Our Strength"
+            className="text-2xl font-semibold uppercase leading-none tracking-[0.08em] text-primary-deep sm:text-3xl md:text-4xl"
+          />
+          <span className="h-px w-10 bg-accent sm:w-16" />
+        </div>
         <div className="grid items-center gap-14 lg:grid-cols-[1fr_1.1fr]">
-            <BrandGlobe markers={REACH_MARKERS} maxWidthClass="max-w-md"/>
+          <BrandGlobe markers={REACH_MARKERS} maxWidthClass="max-w-md" />
           <div>
             <SectionHeading
-              eyebrow="God Is Our Strength"
               title="Made in Nigeria, carried around the world"
               description="From our plant on Oba Akran Avenue, Blue World products reach households in Nigeria, Kenya, China and India. Spin the globe — every marker is a market our cartons land in."
             />
-            <dl className="mt-10 grid grid-cols-2 gap-8 sm:grid-cols-4">
-              {[
-                { k: "1998", v: "Founded in Lagos" },
-                { k: "5", v: "Brands in the house" },
-                { k: "120+", v: "SKUs in production" },
-                { k: "4", v: "Countries reached" },
-              ].map((s) => (
-                <div key={s.k}>
-                  <dt className="font-display text-3xl font-extrabold text-accent">{s.k}</dt>
-                  <dd className="mt-1 text-sm text-muted-foreground">{s.v}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
         </div>
       </Section>
 
-            {/* Business units — Nuban-style: image carries the weight, no card chrome.
-          Order: Vivon, BlueFragrance, BlueWorld Cosmetics, BlueCrystal, Blow Right. */}
+      {/* Business units — plain white, image-forward (Nuban-style), no chrome */}
       <Section>
         <SectionHeading
           eyebrow="Our business"
@@ -148,18 +162,29 @@ function HomePage() {
         </div>
       </Section>
 
-      {/* Featured products */}
-      <Section>
-        <SectionHeading
-          eyebrow="Featured products"
-          title="What our lines are shipping right now"
-        />
+      {/* Featured products — orange-tinted, warms up the page between two
+          otherwise-white sections and breaks the "all white" flatness */}
+      <Section tone="warm">
+        <SectionHeading eyebrow="Featured products" title="What our lines are shipping right now" />
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {products.isLoading && <LoadingBlock label="Loading products…" />}
           {featured.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
+      </Section>
+
+      {/* Quote strip — cheap to build, gives the page a confident, considered
+          moment instead of jumping straight from products to blog. */}
+      <Section className="py-16 lg:py-20">
+        <blockquote className="mx-auto max-w-3xl text-center">
+          <p className="font-display text-2xl font-bold leading-snug text-primary-deep sm:text-3xl">
+            "Make it properly, or do not ship it."
+          </p>
+          <footer className="mt-4 text-sm font-semibold uppercase tracking-[0.14em] text-accent">
+            The rule since 1998
+          </footer>
+        </blockquote>
       </Section>
 
       {/* Latest posts */}
@@ -192,9 +217,7 @@ function HomePage() {
                 <h3 className="mt-3 text-lg font-bold leading-snug text-primary-deep">
                   {post.title}
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                  {post.excerpt}
-                </p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{post.excerpt}</p>
               </div>
             </AppLink>
           ))}

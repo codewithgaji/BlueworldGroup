@@ -1,4 +1,3 @@
-// hero-slides.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ResourceManager, type ColumnConfig, type FieldConfig } from "@/components/admin/resource-manager";
@@ -42,6 +41,7 @@ const columns: ColumnConfig<HeroSlide>[] = [
 
 const fields: FieldConfig<HeroSlide>[] = [
   { name: "image", label: "Background image", type: "image" },
+  { name: "mobileImage", label: "Mobile photo (optional)", type: "image", help: "Shown instead of the desktop photo on phones. Leave blank to reuse the desktop photo." },
   { name: "eyebrow", label: "Eyebrow" },
   { name: "title", label: "Title" },
   { name: "subtitle", label: "Subtitle", type: "textarea", rows: 3 },

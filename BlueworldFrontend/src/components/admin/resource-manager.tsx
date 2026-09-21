@@ -49,6 +49,12 @@ export function ResourceManager<T extends Row>({
 }) {
   const [editing, setEditing] = useState<T | null>(null);
 
+  // CHANGED: split out the image column and the rest so the mobile card
+  // view below can lay out a thumbnail + label:value list without the
+  // caller having to configure anything extra.
+  const imageColumn = columns.find((col) => col.image);
+  const textColumns = columns.filter((col) => !col.image);
+
   return (
     <div className="space-y-6">
       {allowCreate && (
@@ -64,7 +70,11 @@ export function ResourceManager<T extends Row>({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+      {/* CHANGED: table now hidden below `sm` — a data table with 4+
+          columns forces horizontal scroll on a phone just to reach the
+          Actions buttons. Kept as-is for tablet/desktop where a mouse and
+          wider viewport make that a non-issue. */}
+      <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-border bg-secondary/60">
@@ -140,6 +150,62 @@ export function ResourceManager<T extends Row>({
         </div>
       </div>
 
+      {/* NEW: mobile-only stacked card list — replaces the table below `sm`.
+          Uses the same ColumnConfig data the table already has, so no
+          per-page changes needed anywhere ResourceManager is used. */}
+      <div className="space-y-3 sm:hidden">
+        {items.length === 0 && (
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground shadow-card">
+            Nothing here yet — create your first {singular.toLowerCase()}.
+          </div>
+        )}
+        {items.map((item) => (
+          <div key={item.id} className="flex gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
+            {imageColumn && (
+              <CmsImage
+                src={String(item[imageColumn.key] ?? "")}
+                alt=""
+                className="h-16 w-16 shrink-0 rounded-lg object-cover"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              {textColumns.map((col) => {
+                const value = item[col.key];
+                return (
+                  <p key={col.key} className="truncate text-sm">
+                    <span className="font-semibold text-primary-deep">{col.label}: </span>
+                    <span className="text-foreground/80">
+                      {Array.isArray(value) ? `${value.length} item(s)` : String(value ?? "—")}
+                    </span>
+                  </p>
+                );
+              })}
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditing(item)}
+                  aria-label={`Edit ${item.id}`}
+                  className="grid h-10 w-10 place-items-center rounded-lg border border-border text-primary-deep hover:bg-primary-soft"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Delete ${item.id}`}
+                  onClick={() => {
+                    onDelete(item.id);
+                    toast.success(`${singular} deleted`);
+                  }}
+                  className="grid h-10 w-10 place-items-center rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {editing && (
         <RecordEditor
           record={editing}
@@ -171,12 +237,17 @@ export function ImageField({
 
   return (
     <div className="mt-2 space-y-2">
-      <div className="flex gap-3">
+      {/* CHANGED: stacks on mobile (`flex-col`) instead of squeezing the
+          select next to a fixed-width thumbnail; goes side-by-side again
+          at `sm` where there's room. `min-w-0` on the select stops long
+          option text (filenames, bundled-asset keys) from forcing overflow
+          inside the flex row. */}
+      <div className="flex flex-col gap-3 sm:flex-row">
         <select
           id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary"
+          className="w-full min-w-0 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary"
         >
           <option value="">— choose an image —</option>
           {media.length > 0 && (
@@ -198,7 +269,13 @@ export function ImageField({
             </optgroup>
           )}
         </select>
-        {value && <CmsImage src={value} alt="" className="h-12 w-16 shrink-0 rounded-lg object-cover" />}
+        {value && (
+          <CmsImage
+            src={value}
+            alt=""
+            className="h-12 w-16 shrink-0 self-start rounded-lg object-cover sm:self-auto"
+          />
+        )}
       </div>
       <input
         type="text"
@@ -384,7 +461,9 @@ export function RecordEditor<T extends Record<string, unknown>>({
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-primary-deep/60 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card p-7 shadow-lift">
+      {/* CHANGED: tighter padding on mobile (`p-5`), original `p-7` kept
+          from `sm` up. */}
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-lift sm:p-7">
         <h2 className="font-display text-xl font-bold text-primary-deep">Edit {singular.toLowerCase()}</h2>
         <div className="mt-6">{body}</div>
       </div>

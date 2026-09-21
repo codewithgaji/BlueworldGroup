@@ -124,6 +124,7 @@ export function usePage(slug: string) {
   return useQuery({
     queryKey: ["cms", "page", slug],
     queryFn: () => apiFetch<CmsPage>(`${ENDPOINTS.pages}/${slug}`),
-    ...COMMON,
+    staleTime: 0,
+    retry: 0,
   });
 }

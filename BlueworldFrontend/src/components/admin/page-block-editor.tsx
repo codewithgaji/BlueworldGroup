@@ -95,6 +95,11 @@ function CardsRepeater({
   );
 }
 
+// CHANGED: row is `flex-col` by default and only goes side-by-side at `sm:`.
+// The label/href inputs no longer fight over a fixed `w-1/2` on narrow
+// screens — each gets its own full-width row on mobile. Delete button
+// moves onto its own row on mobile too, aligned right, so it doesn't
+// squeeze the inputs.
 function LinkCardsRepeater({
   cards,
   onChange,
@@ -106,12 +111,12 @@ function LinkCardsRepeater({
     <div className="space-y-3">
       {cards.map((card, i) => (
         <div key={i} className="rounded-lg border border-border p-3">
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               value={card.label}
               onChange={(e) => onChange(cards.map((c, j) => (j === i ? { ...c, label: e.target.value } : c)))}
               placeholder="Link text"
-              className={cn(inputClass, "mt-0 w-1/2")}
+              className={cn(inputClass, "mt-0 sm:w-1/2")}
             />
             <input
               value={card.href}
@@ -122,7 +127,7 @@ function LinkCardsRepeater({
             <button
               type="button"
               onClick={() => onChange(cards.filter((_, j) => j !== i))}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-destructive hover:bg-destructive/10"
+              className="grid h-10 w-10 shrink-0 place-items-center self-end rounded-lg text-destructive hover:bg-destructive/10 sm:h-9 sm:w-9 sm:self-auto"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -147,6 +152,9 @@ function LinkCardsRepeater({
   );
 }
 
+// CHANGED: same fix — stacks on mobile, and the tone `<select>` gets
+// `w-full sm:w-32` instead of a fixed `w-32` so it doesn't force overflow
+// next to the eyebrow input on narrow screens.
 function FeatureItemsRepeater({
   items,
   onChange,
@@ -158,28 +166,30 @@ function FeatureItemsRepeater({
     <div className="space-y-3">
       {items.map((item, i) => (
         <div key={i} className="rounded-lg border border-border p-3">
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               value={item.eyebrow}
               onChange={(e) => onChange(items.map((it, j) => (j === i ? { ...it, eyebrow: e.target.value } : it)))}
               placeholder="Small label (e.g. Our vision)"
               className={cn(inputClass, "mt-0 flex-1")}
             />
-            <select
-              value={item.tone}
-              onChange={(e) => onChange(items.map((it, j) => (j === i ? { ...it, tone: e.target.value } : it)))}
-              className={cn(inputClass, "mt-0 w-32")}
-            >
-              <option value="outline">Outline style</option>
-              <option value="accent">Accent style</option>
-            </select>
-            <button
-              type="button"
-              onClick={() => onChange(items.filter((_, j) => j !== i))}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <div className="flex gap-2">
+              <select
+                value={item.tone}
+                onChange={(e) => onChange(items.map((it, j) => (j === i ? { ...it, tone: e.target.value } : it)))}
+                className={cn(inputClass, "mt-0 w-full sm:w-32")}
+              >
+                <option value="outline">Outline style</option>
+                <option value="accent">Accent style</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => onChange(items.filter((_, j) => j !== i))}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-destructive hover:bg-destructive/10 sm:h-9 sm:w-9"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           <textarea
             rows={2}
@@ -325,6 +335,11 @@ const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
 
 export { BLOCK_TYPE_LABELS };
 
+// CHANGED: header row now `flex-wrap` with `gap-y-2` so the badge+select
+// group and the move/remove button group can drop to their own lines on
+// narrow screens instead of overflowing. Move/remove buttons bumped to
+// h-10 w-10 (from h-8 w-8) for a proper touch target and to match the
+// h-9/h-10 sizes used in the repeaters above.
 export function BlockEditorRow({
   block,
   index,
@@ -342,8 +357,8 @@ export function BlockEditorRow({
 }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
-      <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border pb-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary-deep">
             {BLOCK_TYPE_LABELS[block.type]}
           </span>
@@ -357,13 +372,13 @@ export function BlockEditorRow({
           </select>
         </div>
         <div className="flex gap-1">
-          <button type="button" disabled={index === 0} onClick={() => onMove(-1)} className="grid h-8 w-8 place-items-center rounded-lg border border-border disabled:opacity-30">
+          <button type="button" disabled={index === 0} onClick={() => onMove(-1)} className="grid h-10 w-10 place-items-center rounded-lg border border-border disabled:opacity-30">
             <ChevronUp className="h-4 w-4" />
           </button>
-          <button type="button" disabled={index === total - 1} onClick={() => onMove(1)} className="grid h-8 w-8 place-items-center rounded-lg border border-border disabled:opacity-30">
+          <button type="button" disabled={index === total - 1} onClick={() => onMove(1)} className="grid h-10 w-10 place-items-center rounded-lg border border-border disabled:opacity-30">
             <ChevronDown className="h-4 w-4" />
           </button>
-          <button type="button" onClick={onRemove} className="grid h-8 w-8 place-items-center rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10">
+          <button type="button" onClick={onRemove} className="grid h-10 w-10 place-items-center rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10">
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
