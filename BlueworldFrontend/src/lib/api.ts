@@ -1,21 +1,5 @@
 import type { MediaAsset } from "@/lib/types";
 
-
-/**
- * Typed API client layer.
- *
- * Every read goes through `fetchWithFallback`: it tries the real FastAPI
- * endpoint and, if the backend is unreachable / times out, falls back to the
- * local placeholder dataset so the site never renders empty. Genuine backend
- * errors (4xx/5xx with a real response) are now logged to the console instead
- * of being swallowed silently, so integration bugs are visible while testing.
- *
- * Point VITE_API_BASE_URL at the FastAPI host, e.g.:
- *   VITE_API_BASE_URL=http://localhost:8000
- * (the previous "/api" default assumed a reverse-proxy prefix your FastAPI
- * routes don't actually use — they're mounted at root, e.g. /cms/hero-slides).
- */
-
 export const API_BASE_URL =
   (import.meta.env["VITE_API_BASE_URL"] as string | undefined) ?? "http://localhost:8000";
 

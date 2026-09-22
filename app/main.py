@@ -21,6 +21,10 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from core.limiter import limiter
 
+import os
+import logging
+
+logger = logging.getLogger("startup")
 
 app = FastAPI(title="BlueWorld Cosmetics API")
 
@@ -50,6 +54,35 @@ app.include_router(make_admin_crud_router("products", Product, ProductOut, Produ
 app.include_router(make_admin_crud_router("team", TeamMember, TeamMemberOut, TeamMemberCreate))
 app.include_router(make_admin_crud_router("blog-posts", BlogPost, BlogPostOut, BlogPostCreate))
 app.include_router(make_admin_crud_router("jobs", JobPosting, JobPostingOut, JobPostingCreate))
+
+
+@app.on_event("startup")
+def run_startup_tasks():
+    # 1. Run migrations — safe to call every boot; alembic no-ops if already at head
+    try:
+        from alembic.config import Config
+        from alembic import command
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        alembic_ini_path = os.path.join(base_dir, "alembic.ini")
+
+        alembic_cfg = Config(alembic_ini_path)
+        alembic_cfg.set_main_option("script_location", os.path.join(base_dir, "alembic"))
+
+        logger.info("Running alembic migrations...")
+        command.upgrade(alembic_cfg, "head")
+        logger.info("Migrations complete.")
+    except Exception:
+        logger.exception("Migration step failed on startup")
+        raise  # fail loudly — don't let the app serve traffic against an unmigrated DB
+
+    # 2. Seed superuser — no-ops if one already exists
+    try:
+        from scripts.seed_superuser import seed_superuser
+        seed_superuser(interactive=False)
+    except Exception:
+        logger.exception("Superuser seed step failed on startup")
+        # not re-raised: a missing superuser shouldn't take the whole app down
 
 
 @app.get("/health")
