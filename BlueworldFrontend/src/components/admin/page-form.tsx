@@ -121,7 +121,7 @@ export function PageForm({
       </div>
 
       <div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="font-display text-lg font-bold text-primary-deep">Page content</h2>
           <div className="flex items-center gap-2">
             <select

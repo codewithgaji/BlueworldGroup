@@ -87,9 +87,9 @@ function HomePage() {
       {/* Trust bar — sits right under the hero, gives the page immediate
           substance instead of dropping straight into a big empty gap. */}
       <div className="border-b border-border bg-primary-deep py-8">
-        <div className="mx-auto grid max-w-7xl grid-cols-3 gap-6 px-5 sm:grid-cols-6 lg:px-8">
+      <div className="mx-auto grid max-w-7xl grid-cols-3 gap-4 px-5 sm:gap-6 sm:grid-cols-6 lg:px-8">
           {TRUST_MARKERS.map((s) => (
-            <div key={s.k} className="text-center">
+            <div key={s.k} className="min-w-0 text-center">
               <p className="font-display text-2xl font-extrabold text-accent sm:text-3xl">{s.k}</p>
               <p className="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-primary-foreground/70 sm:text-xs">
                 {s.v}
@@ -101,22 +101,51 @@ function HomePage() {
 
       {/* Globe section — a quieter statement keeps the content in focus. */}
       <Section tone="muted" className="py-16 lg:py-24">
-        <div className="mb-12 flex items-center justify-center gap-4 sm:mb-16">
-          <span className="h-px w-10 bg-accent sm:w-16" />
-          <ScrollRevealText
-            text="God Is Our Strength"
-            className="text-2xl font-semibold uppercase leading-none tracking-[0.08em] text-primary-deep sm:text-3xl md:text-4xl"
-          />
-          <span className="h-px w-10 bg-accent sm:w-16" />
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 sm:mb-16"
+        >
+          {/* Lines flank the text only from sm up — on phones they were
+              squeezing the words into an awkward wrap. Below sm it's just
+              centered text, full width, properly sized down. */}
+          <div className="hidden items-center justify-center gap-4 sm:flex">
+            <span className="h-px w-10 bg-accent md:w-16" />
+            <ScrollRevealText
+              text="God Is Our Strength"
+              className="whitespace-nowrap text-3xl font-semibold uppercase leading-none tracking-[0.06em] text-primary-deep md:text-4xl"
+            />
+            <span className="h-px w-10 bg-accent md:w-16" />
+          </div>
+          <div className="sm:hidden">
+            <ScrollRevealText
+              text="God Is Our Strength"
+              className="text-center text-xl font-semibold uppercase leading-snug tracking-[0.04em] text-primary-deep"
+            />
+          </div>
+        </motion.div>
         <div className="grid items-center gap-14 lg:grid-cols-[1fr_1.1fr]">
-          <BrandGlobe markers={REACH_MARKERS} maxWidthClass="max-w-md" />
-          <div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            <BrandGlobe markers={REACH_MARKERS} maxWidthClass="max-w-md" />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
+          >
             <SectionHeading
               title="Made in Nigeria, carried around the world"
               description="From our plant on Oba Akran Avenue, Blue World products reach households in Nigeria, Kenya, China and India. Spin the globe — every marker is a market our cartons land in."
             />
-          </div>
+          </motion.div>
         </div>
       </Section>
 
@@ -140,21 +169,37 @@ function HomePage() {
               viewport={{ once: true, margin: "-80px" }}
               transition={{ duration: 0.45, delay: i * 0.05 }}
             >
-              <AppLink href={`/business/${unit.slug}`} className="group block">
-                <div className="aspect-[4/5] overflow-hidden bg-secondary">
+                            <AppLink href={`/business/${unit.slug}`} className="group block">
+                <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
                   <CmsImage
                     src={unit.heroImage}
                     alt={unit.name}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                   />
+                  {/* Bellussi-style diagonal shine — sweeps across on hover */}
+                  <div
+                    className="pointer-events-none absolute inset-0 -translate-x-[150%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-[150%]"
+                  />
+                  {/* Bottom scrim so the reveal text below is always legible */}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 </div>
                 <div className="mt-4 text-center">
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">
+                  <p className="font-serif text-xs italic tracking-wide text-muted-foreground">Collection</p>
+                  <h3 className="mt-1 font-display text-lg font-bold text-primary-deep">{unit.name}</h3>
+                  <p className="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">
                     {unit.tagline}
                   </p>
-                  <h3 className="mt-1.5 font-display text-base font-bold text-primary-deep">
-                    {unit.name}
-                  </h3>
+                  {/* Hover reveal — hidden until hover, like Bellussi's "you discover" */}
+                  <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-500 ease-out group-hover:grid-rows-[1fr]">
+                    <div className="overflow-hidden">
+                      <p className="mx-auto mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">
+                        {unit.summary}
+                      </p>
+                      <span className="mt-3 inline-block border-b border-accent pb-0.5 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-accent">
+                        Discover
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </AppLink>
             </motion.div>
