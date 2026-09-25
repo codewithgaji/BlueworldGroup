@@ -1,18 +1,16 @@
 import { lazy, Suspense, useState } from "react";
-import { Globe as GlobeIcon, Image as ImageIcon } from "lucide-react";
-import type { GlobeMarker } from "@/components/brand/globe-scene";
+import { Globe as GlobeIcon, Image as ImageIcon, X } from "lucide-react";
+import type { GlobeFocus, GlobeMarker } from "@/components/brand/globe-scene";
+import { getShowcase } from "@/lib/country-showcase";
 
-// react-three-fiber/three touch WebGL/window at import time, so the scene
-// must only ever load client-side. React.lazy + <Suspense> keeps it inside
-// the existing tree (no second root) and skips it entirely during SSR.
 const GlobeScene = lazy(() => import("@/components/brand/globe-scene"));
 
 /**
  * Background presets for the square behind the globe — pick one via
  * `background`, or pass a custom CSS gradient/color string directly.
- * "midnight" is the default: a near-black navy that lets the Earth texture,
- * atmosphere glow and accent-orange markers/wordmark do the contrast work,
- * instead of competing with a bright brand-orange square behind them.
+ * "none" is the default: fully transparent, so the globe floats directly
+ * on whatever the parent section's own background is, with no separate
+ * colored box behind it.
  */
 export const GLOBE_BACKGROUNDS = {
   none: "transparent",
@@ -24,115 +22,46 @@ export const GLOBE_BACKGROUNDS = {
 
 export type GlobeBackground = keyof typeof GLOBE_BACKGROUNDS;
 
-interface BrandGlobeProps {
-  /** Fixed pixel square — for tight, non-growing spots like the navbar. Overrides maxWidthClass entirely. */
-  size?: number;
-  /**
-   * Tailwind max-width class for the responsive (non-`size`) square, e.g. "max-w-sm",
-   * "max-w-md", "max-w-xl". This is the knob for "make the whole square smaller" —
-   * separate from `className` so you don't have to also remember to keep `mx-auto`.
-   */
-  maxWidthClass?: string;
-  /** Extra classes for the outer square — merged alongside maxWidthClass, not replacing it. */
-  className?: string;
-  /** Named preset from GLOBE_BACKGROUNDS, or any raw CSS `background` value. Defaults to "midnight". */
-  background?: GlobeBackground | (string & {});
-  markers?: GlobeMarker[];
-  /** Which view shows first. Defaults to the animated globe. */
-  mode?: "animated" | "static";
-  /** Set to false for tight spaces like a navbar — hides the curved wordmark. */
-  showText?: boolean;
-  /** Back-compat alias for showText, used by the nav-bar instance. */
-  showMotto?: boolean;
-  /** Lets a tight nav instance disable drag/orbit + the toggle button entirely. */
-  interactive?: boolean;
-  /** Hide the on/off toggle button even when interactive. */
-  showToggle?: boolean;
-  /** Short mission line shown in a card top-left of the square. Pass null to hide it. */
-  standText?: string | null;
-
-  // ---- Globe sizing knobs (all % of the square) ----
-  /** Inset from left/right edges before the globe starts. Bigger = smaller globe. */
-  globeMarginX?: number;
-  /** Inset from the top before the globe starts. Bigger = smaller globe, pushed down. */
-  globeMarginTop?: number;
-  /** Inset from the bottom where the globe ends. Bigger = smaller globe, pushed up. */
-  globeMarginBottom?: number;
-
-  // ---- Wordmark curve knobs ----
-  /** "inward" = bulges up toward the globe (what we want here). "outward" = bulges away from it. */
-  wordmarkCurve?: "inward" | "outward";
-  /**
-   * 0–1+ ratio of the chord's half-width used as the curve's sagitta (see buildWordmarkArcPath
-   * for what "sagitta" means here). 1 = a true semicircle matching the globe's own radius —
-   * a tight hug. >1 = wraps MORE than a semicircle, curling further up the globe's sides.
-   * Ignored whenever `wordmarkDepth` is set (depth always wins).
-   */
-  wordmarkHug?: number;
-  /**
-   * Absolute sagitta override, in viewBox units (0–100 scale), instead of the `wordmarkHug`
-   * ratio. This is the ACTUAL curve depth, not a "how far up/down" position — see the big
-   * comment on buildWordmarkArcPath below for the full explanation and safe ranges.
-   * Leave unset to just use `wordmarkHug` instead — that's usually the easier knob.
-   */
-  wordmarkDepth?: number;
-  /**
-   * Vertical gap, in viewBox units, between the globe's bottom edge and the arc's CHORD line
-   * (not the visible curve itself — see comment below). 0 = chord sits exactly at the globe's
-   * edge. Negative = chord moves UP, closer to (or into) the globe. Positive = moves DOWN,
-   * away from the globe, toward the bottom of the square.
-   */
-  wordmarkGap?: number;
+/** Every preset except "none" renders as a dark panel, so the wordmark
+ *  defaults to white against any of them. Only "none" (transparent, sitting
+ *  on the page's own background, which can be light or dark) falls back to
+ *  the theme's own foreground variable. A custom raw CSS string passed to
+ *  `background` is treated as dark too, since that's the overwhelmingly
+ *  common case for this component — override with `wordmarkColor` if not. */
+function defaultWordmarkColor(background: GlobeBackground | (string & {})): string {
+  return background === "none" ? "var(--color-foreground)" : "#ffffff";
 }
 
-/**
- * Derives the wordmark arc's `d` path directly from the globe's own footprint
- * (globeMarginX/Bottom), so the text always hugs wherever the globe currently
- * is — resize the globe and the text follows automatically instead of
- * drifting out of sync.
- *
- * ---- How this actually works, step by step ----
- *
- * 1. `startX`/`endX` — the two endpoints of the curve, in the 0–100 viewBox.
- *    These are pinned to the globe's left/right edges (globeMarginX), so the
- *    curve is always exactly as wide as the globe itself.
- *
- * 2. `y` — the height of the CHORD: an imaginary straight line connecting
- *    startX and endX, before any curving happens. This is NOT where the
- *    visible curve sits — it's the reference line the curve bulges up from.
- *    `gap` shifts this chord up (negative) or down (positive) relative to
- *    the globe's bottom edge.
- *
- * 3. `halfChord` — half the width of that chord. With globeMarginX = 5,
- *    the chord runs from x=5 to x=95, so halfChord = 45.
- *
- * 4. `sagitta` — THIS is what "depth" really means: the height of the bulge,
- *    measured from the middle of the chord straight up to the peak of the
- *    curve. A bigger sagitta = the curve peaks further above the chord line
- *    = a MORE pronounced, tighter-wrapping curve. A sagitta of ~halfChord
- *    (45 here) draws a perfect semicircle. A sagitta near 0 draws an almost
- *    flat line. Sagitta can never be negative or zero — geometrically that's
- *    not a curve — so `depth` gets floored at 1. This is why a very negative
- *    `wordmarkDepth` (like -1000) doesn't "curve the other way" — it just
- *    clamps to the flattest possible curve (sagitta = 1).
- *
- * 5. `radius` — the actual circle radius that produces a curve with this
- *    exact chord width and sagitta. Bigger sagitta (relative to halfChord)
- *    means a SMALLER radius (a tighter, more curled circle) — this can feel
- *    backwards at first, so don't try to reason about "radius", reason
- *    about "sagitta" (= wordmarkDepth) instead.
- *
- * 6. `largeArcFlag` — SVG arcs are ambiguous: for any given radius and chord,
- *    there are two possible arcs (a short one and a long way around). Once
- *    sagitta exceeds radius, we need the "long way around" arc to wrap MORE
- *    than a semicircle (curling further up the globe's sides) — without this
- *    flag, SVG would silently draw the short, flatter arc instead and your
- *    high `wordmarkDepth` would appear to do nothing.
- *
- * 7. `sweepFlag` — just picks which of the two directions (bulge up vs. bulge
- *    down) the curve goes. That's what `wordmarkCurve: "inward" | "outward"`
- *    controls.
- */
+interface BrandGlobeProps {
+  size?: number;
+  maxWidthClass?: string;
+  className?: string;
+  background?: GlobeBackground | (string & {});
+  /** Overrides the automatic contrast pick above — set this explicitly if
+   *  you're passing a custom `background` that isn't dark. */
+  wordmarkColor?: string;
+  markers?: GlobeMarker[];
+  mode?: "animated" | "static";
+  showText?: boolean;
+  showMotto?: boolean;
+  interactive?: boolean;
+  showToggle?: boolean;
+  standText?: string | null;
+  globeMarginX?: number;
+  globeMarginTop?: number;
+  globeMarginBottom?: number;
+  wordmarkCurve?: "inward" | "outward";
+  wordmarkHug?: number;
+  wordmarkDepth?: number;
+  wordmarkGap?: number;
+  /** Name of the currently-selected marker — must match a marker's `name`
+   *  and a key in COUNTRY_SHOWCASE. Pass "" or null to show the default panel. */
+  activeCountry?: string | null;
+  /** Fired when a marker is clicked directly on the globe. Pass the same
+   *  setter you use for chips/buttons elsewhere so both stay in sync. */
+  onSelectCountry?: (name: string) => void;
+}
+
 function buildWordmarkArcPath({
   globeMarginX,
   globeMarginBottom,
@@ -151,20 +80,11 @@ function buildWordmarkArcPath({
   const startX = globeMarginX;
   const endX = 100 - globeMarginX;
   const y = 100 - globeMarginBottom + gap;
-
   const halfChord = (endX - startX) / 2;
-
-  // `depth` (an absolute sagitta) wins over `hug` (a ratio of halfChord) whenever it's set.
-  // Floored at 1 because a sagitta of 0 or less isn't a valid curve at all.
   const sagitta = depth != null ? Math.max(depth, 1) : Math.max(halfChord * Math.max(hug, 0.05), 1);
-
   const radius = (halfChord * halfChord + sagitta * sagitta) / (2 * sagitta);
-
-  // sagitta > radius means we've wrapped past a semicircle — needs the large-arc flag,
-  // or SVG draws the short way around and the curve looks like it "did nothing."
   const largeArcFlag = sagitta > radius ? 1 : 0;
   const sweepFlag = curve === "inward" ? 0 : 1;
-
   return `M ${startX} ${y} A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${endX} ${y}`;
 }
 
@@ -173,6 +93,7 @@ export function BrandGlobe({
   maxWidthClass = "max-w-xl",
   className,
   background = "none",
+  wordmarkColor,
   markers = [],
   mode = "animated",
   showText = true,
@@ -180,20 +101,40 @@ export function BrandGlobe({
   interactive = true,
   showToggle = true,
   standText = "Five Nigerian-made brands, trusted in homes across four countries and counting.",
-  globeMarginX = 10,
-  globeMarginTop = 4,
+  // Tightened further from earlier passes — the goal is the sphere nearly
+  // filling its box, not floating in a visibly empty square. Bottom stays
+  // a bit larger than top/sides because the curved wordmark needs that
+  // room underneath the globe.
+  globeMarginX = 4,
+  globeMarginTop = 2,
   globeMarginBottom = 6,
   wordmarkCurve = "inward",
   wordmarkHug = 1,
   wordmarkDepth = 70,
   wordmarkGap = -70,
+  activeCountry = null,
+  onSelectCountry,
 }: BrandGlobeProps) {
   const wordmark = showMotto ?? showText;
   const [view, setView] = useState<"animated" | "static">(interactive ? mode : "static");
   const canToggle = interactive && showToggle;
 
+  const showcase = activeCountry ? getShowcase(activeCountry) : null;
+  const focusMarker = activeCountry
+    ? markers.find((m) => m.name.toLowerCase() === activeCountry.toLowerCase())
+    : null;
+  const focus: GlobeFocus | null = focusMarker ? { lat: focusMarker.lat, lng: focusMarker.lng } : null;
+
+  // When a country's selected, shrink the globe's own box (bigger margins)
+  // so more of the backdrop photo shows around it — this is the "globe
+  // becomes a little smaller to show the image" behavior.
+  const marginX = showcase ? globeMarginX + 16 : globeMarginX;
+  const marginTop = showcase ? globeMarginTop + 14 : globeMarginTop;
+  const marginBottom = showcase ? globeMarginBottom + 16 : globeMarginBottom;
+
   const backgroundCss =
     background in GLOBE_BACKGROUNDS ? GLOBE_BACKGROUNDS[background as GlobeBackground] : background;
+  const resolvedWordmarkColor = wordmarkColor ?? defaultWordmarkColor(background);
 
   const outerStyle = size ? { width: size, height: size } : undefined;
   const outerClassName = size
@@ -201,8 +142,8 @@ export function BrandGlobe({
     : `relative w-full overflow-hidden rounded-3xl aspect-square mx-auto ${maxWidthClass} ${className ?? ""}`;
 
   const wordmarkPath = buildWordmarkArcPath({
-    globeMarginX,
-    globeMarginBottom,
+    globeMarginX: marginX,
+    globeMarginBottom: marginBottom,
     hug: wordmarkHug,
     depth: wordmarkDepth,
     gap: wordmarkGap,
@@ -210,57 +151,77 @@ export function BrandGlobe({
   });
 
   return (
-    <div
-      className={outerClassName}
-      style={{
-        ...outerStyle,
-        background: backgroundCss,
-      }}
-    >
-      {view === "static" || !interactive ? (
-        <img
-          src="/blueworld.png"
-          alt="Blue World Cosmetics"
-          className="h-full w-full object-cover"
-          draggable={false}
+    <div className={outerClassName} style={{ ...outerStyle, background: backgroundCss }}>
+      {/* Tint fallback layer — sits behind the photo, only matters if the
+          image 404s (per country-showcase.ts's own comment: "until a file
+          exists, the tint gradient shows instead, so nothing breaks"). */}
+      {showcase && (
+        <div
+          className="absolute inset-0 transition-opacity duration-700"
+          style={{ background: showcase.tint }}
         />
+      )}
+
+      {/* Country backdrop photo — fades in behind the globe when a marker is selected */}
+      <div
+        className="absolute inset-0 transition-opacity duration-700 ease-out"
+        style={{
+          opacity: showcase ? 1 : 0,
+          backgroundImage: showcase
+            ? `linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.6) 100%), url(${showcase.image})`
+            : undefined,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+
+      {view === "static" || !interactive ? (
+        <img src="/blueworld.png" alt="Blue World Cosmetics" className="h-full w-full object-cover" draggable={false} />
       ) : (
         <>
-          {/* Globe footprint — driven by globeMarginX/Top/Bottom so resizing it
-              and re-hugging the text stay in sync automatically. */}
           <div
-            className="absolute"
+            className="absolute transition-all duration-700 ease-out"
             style={{
-              left: `${globeMarginX}%`,
-              right: `${globeMarginX}%`,
-              top: `${globeMarginTop}%`,
-              bottom: `${globeMarginBottom}%`,
+              left: `${marginX}%`,
+              right: `${marginX}%`,
+              top: `${marginTop}%`,
+              bottom: `${marginBottom}%`,
             }}
           >
-            <Suspense
-              fallback={<div className="h-full w-full animate-pulse rounded-full bg-white/10" />}
-            >
-              <GlobeScene markers={markers} interactive />
+            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-full bg-white/10" />}>
+              <GlobeScene
+                markers={markers}
+                interactive
+                focus={focus}
+                selected={activeCountry}
+                onSelect={onSelectCountry}
+              />
             </Suspense>
           </div>
 
-          {standText && (
+          {standText && !showcase && (
             <div className="pointer-events-none absolute left-3 top-3 max-w-[46%] rounded-lg border border-white/15 bg-primary-deep/85 p-2.5 text-[10px] font-medium leading-snug text-primary-foreground shadow-lift">
               {standText}
             </div>
           )}
 
-          {/* Curved "GOD IS OUR STRENGTH" — percentage viewBox, so it scales with the square at any size.
-              `side="right"` on textPath is what makes the glyphs lean inward toward the globe (matching
-              the logo) instead of outward/upside-down, which is the default without it. */}
-          {wordmark && (
-            <svg
-              className="pointer-events-none absolute inset-0 h-full w-full"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-            >
+          {/* Curved wordmark — classic serif per brand direction: Times New
+              Roman, bold. `fill` uses resolvedWordmarkColor so it stays
+              legible against whatever panel this sits on (white on any dark
+              preset, theme-aware when background="none"). `side="right"` on
+              textPath makes the glyphs lean inward toward the globe. Hidden
+              while a country backdrop is showing, since the label below
+              replaces it. */}
+          {wordmark && !showcase && (
+            <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
               <path id="brand-globe-arc" d={wordmarkPath} fill="none" />
-              <text fontSize="5.6" fontWeight="800" fill="var(--color-foreground)"letterSpacing="0.1">
+              <text
+                fontSize="5.6"
+                fontWeight="700"
+                fontFamily="'Times New Roman', Times, serif"
+                fill={resolvedWordmarkColor}
+                letterSpacing="0.08"
+              >
                 <textPath
                   href="#brand-globe-arc"
                   startOffset="50%"
@@ -272,10 +233,32 @@ export function BrandGlobe({
               </text>
             </svg>
           )}
+
+          {/* Country label — replaces the wordmark/standText while a country is active */}
+          {showcase && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/80">{showcase.place}</p>
+              <p className="font-display text-lg font-bold leading-tight text-white">{showcase.headline}</p>
+            </div>
+          )}
         </>
       )}
 
-      {canToggle && (
+      {/* Reset button — only shown while a country is active, clears back
+          to the deep-blue default panel. */}
+      {showcase && onSelectCountry && (
+        <button
+          type="button"
+          onClick={() => onSelectCountry("")}
+          aria-label="Back to overview"
+          title="Back to overview"
+          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur transition-colors hover:bg-black/70"
+        >
+          <X size={16} />
+        </button>
+      )}
+
+      {canToggle && !showcase && (
         <button
           type="button"
           onClick={() => setView((v) => (v === "animated" ? "static" : "animated"))}
